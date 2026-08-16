@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 
 export interface AuthActionResult {
   success: boolean;
@@ -48,6 +49,11 @@ export async function signup(
       error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
     };
   }
+
+  const headerList = await headers();
+  const host = headerList.get("host");
+  const protocol = headerList.get("x-forwarded-proto") ?? "https";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? `${protocol}://${host}`;
 
   const supabase = await createClient();
 
