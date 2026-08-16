@@ -139,6 +139,129 @@ export async function logRide(payload: LogRidePayload): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------------------
+// deleteRide
+// ---------------------------------------------------------------------------
+
+/**
+ * Deletes a ride owned by the current user. RLS should already restrict
+ * deletes to rows the caller owns (see the required `rides` DELETE policy
+ * noted alongside this Phase's SQL), but we scope the query by `user_id`
+ * too as defense-in-depth — it also means someone else's ride id fails as
+ * "not found" rather than depending solely on the database to reject it.
+ */
+export async function deleteRide(rideId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "You must be signed in to delete a ride." };
+  }
+
+  if (!rideId) {
+    return { success: false, error: "Missing ride id." };
+  }
+
+  const { error: deleteError, count } = await supabase
+    .from("rides")
+    .delete({ count: "exact" })
+    .eq("id", rideId)
+    .eq("user_id", user.id);
+
+  if (deleteError) {
+    return { success: false, error: deleteError.message };
+  }
+  if (!count) {
+    return { success: false, error: "Ride not found." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// getUserRideHistory
+// ---------------------------------------------------------------------------
+
+export interface RideHistoryEntry {
+  id: string;
+  riddenAt: string;
+  notes: string | null;
+  coaster: {
+    id: string;
+    name: string;
+    park: string;
+  };
+}
+
+/** Fetches the current user's full ride history, most recent first. */
+export async function getUserRideHistory(): Promise<
+  ActionResult<RideHistoryEntry[]>
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      success: false,
+      error: "You must be signed in to view your ride history.",
+    };
+  }
+
+  const { data: rides, error: ridesError } = await supabase
+    .from("rides")
+    .select("id, coaster_id, ridden_at, notes")
+    .eq("user_id", user.id)
+    .order("ridden_at", { ascending: false });
+
+  if (ridesError) {
+    return { success: false, error: ridesError.message };
+  }
+
+  const rideRows = rides ?? [];
+  if (rideRows.length === 0) {
+    return { success: true, data: [] };
+  }
+
+  const distinctCoasterIds = Array.from(
+    new Set(rideRows.map((r) => r.coaster_id)),
+  );
+
+  const { data: coasters, error: coastersError } = await supabase
+    .from("coasters")
+    .select("id, name, park")
+    .in("id", distinctCoasterIds);
+
+  if (coastersError) {
+    return { success: false, error: coastersError.message };
+  }
+
+  const coasterById = new Map((coasters ?? []).map((c) => [c.id, c]));
+
+  const history = rideRows
+    .map((ride): RideHistoryEntry | null => {
+      const coaster = coasterById.get(ride.coaster_id);
+      if (!coaster) return null; // orphaned ride (shouldn't happen given the FK constraint)
+      return {
+        id: ride.id,
+        riddenAt: ride.ridden_at,
+        notes: ride.notes,
+        coaster: { id: coaster.id, name: coaster.name, park: coaster.park },
+      };
+    })
+    .filter((entry): entry is RideHistoryEntry => entry !== null);
+
+  return { success: true, data: history };
+}
+
+// ---------------------------------------------------------------------------
 // getUserDashboardData
 // ---------------------------------------------------------------------------
 

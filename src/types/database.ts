@@ -109,7 +109,20 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      // Aggregates credits/rides per opted-in user, server-side. See
+      // src/actions/leaderboard.ts for why this is a SECURITY DEFINER
+      // function rather than a client-side query.
+      get_leaderboard: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          display_name: string;
+          credit_count: number;
+          total_rides: number;
+        }[];
+      };
+    };
     Enums: {
       coaster_type: "steel" | "wooden" | "hybrid" | "other";
       user_role: "enthusiast" | "admin";
