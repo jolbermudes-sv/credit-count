@@ -55,6 +55,7 @@ export async function signup(
     email,
     password,
     options: {
+      emailRedirectTo: `${origin}/auth/confirm`,
       data: { display_name: displayName },
     },
   });
