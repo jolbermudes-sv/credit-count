@@ -1,8 +1,9 @@
+//src/app/leaderboard/page.tsx
 import Link from "next/link";
 import { Oswald, Inter } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { getLeaderboard } from "@/actions/leaderboard";
-import { logout } from "@/actions/auth"; // Import your logout server action
+import { logout } from "@/actions/auth";
 import {
   DesktopNavLinks,
   MobileNavLinks,
@@ -35,14 +36,6 @@ function TrackMark() {
   );
 }
 
-/**
- * Deliberately NOT nested under (dashboard): this page is linked from the
- * pre-login screen (see src/app/(auth)/login/page.tsx) and must render for
- * signed-out visitors. Auth is checked here only to decide which header
- * layout to show and to highlight the viewer's own row — never to gate
- * access. Access control for *who appears* happens at the database layer
- * (privacy_opt_in), not here.
- */
 export default async function LeaderboardPage() {
   const supabase = await createClient();
   const {
@@ -157,7 +150,7 @@ export default async function LeaderboardPage() {
           </div>
         ) : (
           <div className="mt-6 overflow-hidden rounded-sm border border-line">
-            <div className="grid grid-cols-[3rem_1fr_5rem_5rem] gap-2 bg-ink px-4 py-2">
+            <div className="grid grid-cols-[3rem_1fr_5rem] gap-2 bg-ink px-4 py-2">
               <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-cream">
                 #
               </span>
@@ -176,8 +169,8 @@ export default async function LeaderboardPage() {
 
                 return (
                   <li
-                    key={entry.id}
-                    className={`grid grid-cols-[3rem_1fr_5rem_5rem] items-center gap-2 px-4 py-3 ${
+                    key={entry.id ?? index}
+                    className={`grid grid-cols-[3rem_1fr_5rem] items-center gap-2 px-4 py-3 ${
                       isViewer ? "bg-[#EFE6CC]" : "bg-card"
                     } ${
                       index !== 0 ? "border-t border-dashed border-line" : ""
