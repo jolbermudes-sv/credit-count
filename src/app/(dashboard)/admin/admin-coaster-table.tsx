@@ -45,11 +45,6 @@ export default function AdminCoasterTable({
   });
   const [error, setError] = useState<string | null>(null);
 
-  // Keep local state synchronized when server props update after router.refresh()
-  useEffect(() => {
-    setCoasters(initialCoasters);
-  }, [initialCoasters]);
-
   const resetForm = () => {
     setEditingId(null);
     setFormData({

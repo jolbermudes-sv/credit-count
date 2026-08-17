@@ -41,7 +41,10 @@ export default async function AdminPage() {
         </span>
       </div>
 
-      <AdminCoasterTable initialCoasters={coasters || []} />
+      <AdminCoasterTable
+        key={coasters?.length}
+        initialCoasters={coasters || []}
+      />
     </div>
   );
 }
