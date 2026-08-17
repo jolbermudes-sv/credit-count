@@ -184,7 +184,7 @@ export async function deleteCoaster(coasterId: string): Promise<ActionResult> {
 
   const { error, count } = await supabase
     .from("coasters")
-    .update({ is_active: false })
+    .update({ is_active: false }, { count: "exact" })
     .eq("id", coasterId);
 
   if (error) {
