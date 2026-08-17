@@ -1,3 +1,4 @@
+//src\app\(dashboard)\admin\admin-coaster-table.tsx
 "use client";
 
 import { useState } from "react";
@@ -13,6 +14,7 @@ interface Coaster {
   country: string;
   type: CoasterType;
   manufacturer: string;
+  is_active?: boolean;
 }
 
 interface CoasterFormData {
@@ -21,6 +23,7 @@ interface CoasterFormData {
   country: string;
   type: CoasterType;
   manufacturer: string;
+  is_active: boolean;
 }
 
 export default function AdminCoasterTable({
@@ -38,6 +41,7 @@ export default function AdminCoasterTable({
     country: "",
     type: "steel",
     manufacturer: "",
+    is_active: true,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +53,7 @@ export default function AdminCoasterTable({
       country: "",
       type: "steel",
       manufacturer: "",
+      is_active: true,
     });
     setError(null);
   };
@@ -61,6 +66,7 @@ export default function AdminCoasterTable({
       country: coaster.country,
       type: coaster.type,
       manufacturer: coaster.manufacturer,
+      is_active: coaster.is_active ?? true,
     });
   };
 
