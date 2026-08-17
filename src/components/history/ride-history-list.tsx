@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteRide, type RideHistoryEntry } from "@/actions/rides";
-import { EditRideModal } from "./edit-ride-modal";
+import { EditRideModal } from "@/components/rides/edit-ride-modal";
 
 const INK = "#17233C";
 const CARD = "#FBF7EC";

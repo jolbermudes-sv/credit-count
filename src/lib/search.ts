@@ -7,11 +7,10 @@
  * so a search for e.g. "50%" behaves as a literal match rather than an
  * open wildcard.
  */
-export function sanitizeSearchTerm(input: string): string {
-  return input
-    .replace(/[,()]/g, '')
-    .replace(/[%_]/g, '\\$&')
-    .trim()
+export function sanitizeSearchTerm(input?: string | null): string {
+  if (!input || typeof input !== "string") return "";
+
+  return input.replace(/[,()]/g, "").replace(/[%_]/g, "\\$&").trim();
 }
 
-export const MIN_SEARCH_QUERY_LENGTH = 2
+export const MIN_SEARCH_QUERY_LENGTH = 2;

@@ -4,12 +4,22 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+export type CoasterType = "steel" | "wooden" | "hybrid" | "other";
+
 interface Coaster {
   id: string;
   name: string;
-  park: string; // Using 'park' to match your updated schema
+  park: string;
   country: string;
-  type: string;
+  type: CoasterType;
+  manufacturer: string;
+}
+
+interface CoasterFormData {
+  name: string;
+  park: string;
+  country: string;
+  type: CoasterType;
   manufacturer: string;
 }
 
@@ -22,7 +32,7 @@ export default function AdminCoasterTable({
   const supabase = createClient();
   const [coasters, setCoasters] = useState<Coaster[]>(initialCoasters);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CoasterFormData>({
     name: "",
     park: "",
     country: "",
@@ -157,7 +167,9 @@ export default function AdminCoasterTable({
           />
           <select
             value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, type: e.target.value as CoasterType })
+            }
             className="p-2 border rounded"
           >
             <option value="steel">Steel</option>
