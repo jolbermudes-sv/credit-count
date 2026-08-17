@@ -1,6 +1,6 @@
 // src/app/(dashboard)/settings/page.tsx
 import { getUserProfile } from "@/actions/profile";
-import { PrivacyToggle } from "@/app/(dashboard)/settings/privacy-toggle";
+import { PrivacyToggle } from "./privacy-toggle";
 
 const INK = "#17233C";
 const CREAM = "#F5EEDA";
