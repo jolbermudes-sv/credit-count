@@ -5,10 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/actions/rides";
 
 export interface LeaderboardEntry {
-  id: string;
-  displayName: string;
-  creditCount: number;
-  totalRides: number;
+  id?: string;
+  displayName: string | null;
+  creditCount: number | string | null;
 }
 
 /**
@@ -57,20 +56,27 @@ export interface LeaderboardEntry {
 export async function getLeaderboard(): Promise<
   ActionResult<LeaderboardEntry[]>
 > {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase.rpc("get_leaderboard");
+    const { data, error } = await supabase.rpc("get_leaderboard");
 
-  if (error) {
-    return { success: false, error: error.message };
+    if (error) {
+      console.error("Supabase RPC Error (get_leaderboard):", error);
+      return { success: false, error: "Failed to load leaderboard data." };
+    }
+
+    const entries: LeaderboardEntry[] = (
+      (data as unknown as LeaderboardEntry[]) ?? []
+    ).map((row) => ({
+      id: row.id || "",
+      displayName: row.displayName || "Unknown Rider",
+      creditCount: Number(row.creditCount) || 0,
+    }));
+
+    return { success: true, data: entries };
+  } catch (err) {
+    console.error("Unexpected error in getLeaderboard:", err);
+    return { success: false, error: "An unexpected error occurred." };
   }
-
-  const entries: LeaderboardEntry[] = (data ?? []).map((row) => ({
-    id: row.id,
-    displayName: row.display_name,
-    creditCount: row.credit_count,
-    totalRides: row.total_rides,
-  }));
-
-  return { success: true, data: entries };
 }

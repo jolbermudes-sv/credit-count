@@ -165,7 +165,9 @@ export default async function LeaderboardPage() {
             <ul>
               {entries.map((entry, index) => {
                 const rank = index + 1;
-                const isViewer = user?.id === entry.id;
+                const isViewer = Boolean(
+                  user?.id && entry.id && user.id === entry.id,
+                );
 
                 return (
                   <li
