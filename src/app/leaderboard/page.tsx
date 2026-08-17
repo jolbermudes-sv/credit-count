@@ -203,9 +203,6 @@ export default async function LeaderboardPage() {
                     <span className="text-right text-sm font-semibold text-ink">
                       {entry.creditCount}
                     </span>
-                    <span className="text-right text-sm text-muted">
-                      {entry.totalRides}
-                    </span>
                   </li>
                 );
               })}
