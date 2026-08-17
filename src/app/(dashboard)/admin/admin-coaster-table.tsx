@@ -1,7 +1,7 @@
-//src\app\(dashboard)\admin\admin-coaster-table.tsx
+// src/app/(dashboard)/admin/admin-coaster-table.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -44,6 +44,11 @@ export default function AdminCoasterTable({
     is_active: true,
   });
   const [error, setError] = useState<string | null>(null);
+
+  // Keep local state synchronized when server props update after router.refresh()
+  useEffect(() => {
+    setCoasters(initialCoasters);
+  }, [initialCoasters]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -114,7 +119,10 @@ export default function AdminCoasterTable({
       return;
     }
 
-    setCoasters(coasters.filter((c) => c.id !== id));
+    // Update local state to reflect soft-delete (is_active: false)
+    setCoasters(
+      coasters.map((c) => (c.id === id ? { ...c, is_active: false } : c)),
+    );
     router.refresh();
   };
 
@@ -264,6 +272,7 @@ export default function AdminCoasterTable({
                   <td className="px-4 py-2">{c.manufacturer}</td>
                   <td className="px-4 py-2 text-right space-x-2">
                     <button
+                      type="button"
                       onClick={() => handleEdit(c)}
                       className="text-indigo-600 hover:text-indigo-900 text-sm font-semibold"
                     >
@@ -272,6 +281,7 @@ export default function AdminCoasterTable({
 
                     {isActive ? (
                       <button
+                        type="button"
                         onClick={() => handleDelete(c.id)}
                         className="text-red-600 hover:text-red-900 text-sm font-semibold"
                       >
@@ -279,6 +289,7 @@ export default function AdminCoasterTable({
                       </button>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => handleRestore(c.id)}
                         className="text-green-600 hover:text-green-900 text-sm font-semibold"
                       >

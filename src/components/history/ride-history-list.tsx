@@ -1,3 +1,4 @@
+// src\components\history\ride-history-list.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -25,8 +26,11 @@ export function RideHistoryList({ rides }: { rides: RideHistoryEntry[] }) {
   const [isPending, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [editingRide, setEditingRide] = useState<RideHistoryEntry | null>(null);
+  const [editingRideId, setEditingRideId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Keep editing ride synchronized with the latest props
+  const editingRide = rides.find((r) => r.id === editingRideId) ?? null;
 
   function handleDeleteClick(rideId: string) {
     if (confirmingId !== rideId) {
@@ -120,7 +124,7 @@ export function RideHistoryList({ rides }: { rides: RideHistoryEntry[] }) {
               <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
                 <button
                   type="button"
-                  onClick={() => setEditingRide(ride)}
+                  onClick={() => setEditingRideId(ride.id)}
                   disabled={isPending}
                   className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
                   style={{ borderColor: LINE, color: RAIL }}
@@ -171,7 +175,7 @@ export function RideHistoryList({ rides }: { rides: RideHistoryEntry[] }) {
           key={editingRide.id}
           ride={editingRide}
           isOpen={!!editingRide}
-          onClose={() => setEditingRide(null)}
+          onClose={() => setEditingRideId(null)}
         />
       )}
     </div>
