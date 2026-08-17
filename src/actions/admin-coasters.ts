@@ -16,6 +16,7 @@ export interface CreateCoasterPayload {
   country: string;
   manufacturer: string;
   type: CoasterType;
+  isActive?: boolean;
 }
 
 export type UpdateCoasterPayload = Partial<CreateCoasterPayload>;
@@ -96,6 +97,7 @@ export async function createCoaster(
       country: payload.country.trim(),
       manufacturer: payload.manufacturer.trim(),
       type: payload.type,
+      is_active: payload.isActive ?? true,
     })
     .select()
     .single();
@@ -140,6 +142,7 @@ export async function updateCoaster(
   if (payload.manufacturer)
     updateData.manufacturer = payload.manufacturer.trim();
   if (payload.type) updateData.type = payload.type;
+  if (payload.isActive) updateData.is_active = payload.isActive;
 
   const { error, count } = await supabase
     .from("coasters")
@@ -181,7 +184,7 @@ export async function deleteCoaster(coasterId: string): Promise<ActionResult> {
 
   const { error, count } = await supabase
     .from("coasters")
-    .delete({ count: "exact" })
+    .update({ is_active: false })
     .eq("id", coasterId);
 
   if (error) {

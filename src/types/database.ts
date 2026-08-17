@@ -44,6 +44,7 @@ export interface Database {
           manufacturer: string;
           type: "steel" | "wooden" | "hybrid" | "other";
           created_at: string;
+          is_active: boolean;
         };
         Insert: {
           id?: string;
@@ -53,6 +54,7 @@ export interface Database {
           manufacturer: string;
           type: "steel" | "wooden" | "hybrid" | "other";
           created_at?: string;
+          is_active: boolean;
         };
         Update: {
           id?: string;
@@ -62,6 +64,7 @@ export interface Database {
           manufacturer?: string;
           type?: "steel" | "wooden" | "hybrid" | "other";
           created_at?: string;
+          is_active?: boolean;
         };
         Relationships: [];
       };

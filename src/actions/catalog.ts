@@ -26,6 +26,7 @@ export interface CatalogQueryParams {
   country?: string;
   manufacturer?: string;
   page?: number;
+  is_active?: boolean;
 }
 
 export interface CatalogResult {
@@ -59,7 +60,8 @@ export async function getCatalogCoasters(
 
   let query = supabase
     .from("coasters")
-    .select("id, name, park, country, manufacturer, type", { count: "exact" });
+    .select("id, name, park, country, manufacturer, type", { count: "exact" })
+    .eq("is_active", true);
 
   const term = params.search ? sanitizeSearchTerm(params.search) : "";
   if (term.length >= MIN_SEARCH_QUERY_LENGTH) {
