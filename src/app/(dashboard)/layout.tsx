@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Oswald, Inter } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
+import { ensureUserProfile } from "@/lib/profile";
 import { logout } from "@/actions/auth";
 import {
   DesktopNavLinks,
@@ -46,16 +47,12 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // `.select('display_name, role')` narrows the inferred row type to just
-  // those two columns via the typed Supabase client — no manual casting.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, role")
-    .eq("id", user.id)
-    .single();
-
-  const displayName = profile?.display_name ?? user.email ?? "Rider";
-  const isAdmin = profile?.role === "admin";
+  // ensureUserProfile self-heals a missing row (see src/lib/profile.ts) —
+  // raw `.select().single()` here would silently fall through to
+  // `user.email` whenever the handle_new_user trigger hadn't fired yet.
+  const profile = await ensureUserProfile(supabase, user);
+  const displayName = profile.displayName;
+  const isAdmin = profile.role === "admin";
 
   return (
     <div

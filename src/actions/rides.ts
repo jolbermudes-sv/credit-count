@@ -3,6 +3,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { ensureUserProfile } from "@/lib/profile";
 import type { Coaster } from "@/types/database";
 
 export interface ActionResult<T = undefined> {
@@ -139,15 +140,79 @@ export async function logRide(payload: LogRidePayload): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------------------
+// updateRide
+// ---------------------------------------------------------------------------
+
+export interface UpdateRidePayload {
+  ridden_at: string;
+  notes?: string;
+}
+
+/**
+ * Updates the date/notes on a ride owned by the current user (the coaster
+ * itself isn't reassignable here — changing which coaster a ride was on
+ * is closer to "delete and re-log" than an edit, so it's kept out of
+ * scope). Was missing entirely prior to this pass — the SOW requires
+ * users be able to edit, not just delete, their own ride entries.
+ */
+export async function updateRide(
+  rideId: string,
+  payload: UpdateRidePayload,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "You must be signed in to edit a ride." };
+  }
+
+  const riddenAt = payload.ridden_at.trim();
+
+  if (!ISO_DATE_PATTERN.test(riddenAt)) {
+    return { success: false, error: "Enter a valid date (YYYY-MM-DD)." };
+  }
+  if (riddenAt > todayIsoDate()) {
+    return {
+      success: false,
+      error: "You can't log a ride that hasn't happened yet.",
+    };
+  }
+
+  const { error: updateError, count } = await supabase
+    .from("rides")
+    .update(
+      { ridden_at: riddenAt, notes: payload.notes?.trim() || null },
+      { count: "exact" },
+    )
+    .eq("id", rideId)
+    .eq("user_id", user.id);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+  if (!count) {
+    return { success: false, error: "Ride not found." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
 // deleteRide
 // ---------------------------------------------------------------------------
 
 /**
- * Deletes a ride owned by the current user. RLS should already restrict
- * deletes to rows the caller owns (see the required `rides` DELETE policy
- * noted alongside this Phase's SQL), but we scope the query by `user_id`
- * too as defense-in-depth — it also means someone else's ride id fails as
- * "not found" rather than depending solely on the database to reject it.
+ * Deletes a ride owned by the current user. RLS restricts deletes to rows
+ * the caller owns (see supabase/rls_and_functions.sql), but we scope the
+ * query by `user_id` too as defense-in-depth — it also means someone
+ * else's ride id fails as "not found" rather than depending solely on the
+ * database to reject it.
  */
 export async function deleteRide(rideId: string): Promise<ActionResult> {
   const supabase = await createClient();
@@ -305,13 +370,9 @@ const EMPTY_STATS: Omit<DashboardStats, "displayName"> = {
  * "rides" counts every logged visit (COUNT *), so riding the same coaster
  * twice adds a ride but not a credit.
  *
- * Deliberately does two plain queries (rides, then coasters by id) and
- * joins them in memory, rather than a single PostgREST embedded select
- * (`rides.select('*, coasters(*)')`). The embedded form relies on
- * `@supabase/ssr`'s select-string type inference matching this hand-written
- * `Database` type exactly — fragile without a CLI-generated schema. Two
- * queries against our own `TableRow` types are slower by one round trip
- * but their types are trivially, verifiably correct.
+ * Uses `ensureUserProfile` rather than a raw query — this is one of the
+ * three places that previously fell back to showing the user's email
+ * address when their `profiles` row was missing.
  */
 export async function getUserDashboardData(): Promise<
   ActionResult<DashboardStats>
@@ -329,21 +390,16 @@ export async function getUserDashboardData(): Promise<
     };
   }
 
-  const [{ data: profile }, { data: rides, error: ridesError }] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", user.id)
-        .single(),
-      supabase.from("rides").select("coaster_id").eq("user_id", user.id),
-    ]);
+  const [profile, { data: rides, error: ridesError }] = await Promise.all([
+    ensureUserProfile(supabase, user),
+    supabase.from("rides").select("coaster_id").eq("user_id", user.id),
+  ]);
 
   if (ridesError) {
     return { success: false, error: ridesError.message };
   }
 
-  const displayName = profile?.display_name ?? user.email ?? "Rider";
+  const displayName = profile.displayName;
   const rideRows = rides ?? [];
 
   if (rideRows.length === 0) {
