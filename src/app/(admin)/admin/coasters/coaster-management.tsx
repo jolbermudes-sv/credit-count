@@ -1,8 +1,8 @@
 // src/app/(admin)/admin/coasters/coaster-management.tsx
-"use me";
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useOptimistic, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   createCoaster,
   updateCoaster,
@@ -15,11 +15,35 @@ interface Props {
   initialCoasters: Coaster[];
 }
 
+type OptimisticAction =
+  | { type: "create"; coaster: Coaster }
+  | { type: "update"; coaster: Coaster }
+  | { type: "delete"; id: string };
+
 const COASTER_TYPES: CoasterType[] = ["steel", "wooden", "hybrid", "other"];
 
 export function CoasterManagement({ initialCoasters }: Props) {
-  const [coasters] = useState<Coaster[]>(initialCoasters);
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // Optimistic UI updates synced with server revalidation
+  const [optimisticCoasters, setOptimisticCoasters] = useOptimistic(
+    initialCoasters,
+    (currentCoasters, action: OptimisticAction) => {
+      switch (action.type) {
+        case "create":
+          return [...currentCoasters, action.coaster];
+        case "update":
+          return currentCoasters.map((c) =>
+            c.id === action.coaster.id ? action.coaster : c,
+          );
+        case "delete":
+          return currentCoasters.filter((c) => c.id !== action.id);
+        default:
+          return currentCoasters;
+      }
+    },
+  );
 
   // Modal State
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +58,15 @@ export function CoasterManagement({ initialCoasters }: Props) {
     manufacturer: "",
     type: "steel" as CoasterType,
   });
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    if (isOpen) window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   const openCreateModal = () => {
     setEditingCoaster(null);
@@ -66,17 +99,33 @@ export function CoasterManagement({ initialCoasters }: Props) {
     setErrorMessage(null);
 
     startTransition(async () => {
-      let res;
       if (editingCoaster) {
-        res = await updateCoaster(editingCoaster.id, formData);
-      } else {
-        res = await createCoaster(formData);
-      }
+        const updatedCoaster: Coaster = { ...editingCoaster, ...formData };
+        setOptimisticCoasters({ type: "update", coaster: updatedCoaster });
 
-      if (res.success) {
-        setIsOpen(false);
+        const res = await updateCoaster(editingCoaster.id, formData);
+        if (res.success) {
+          setIsOpen(false);
+          router.refresh();
+        } else {
+          setErrorMessage(res.error || "An error occurred while updating.");
+        }
       } else {
-        setErrorMessage(res.error || "An error occurred.");
+        // Temporary optimistic object while server processes
+        const tempCoaster: Coaster = {
+          id: `temp-${Date.now()}`,
+          ...formData,
+        } as Coaster;
+
+        setOptimisticCoasters({ type: "create", coaster: tempCoaster });
+
+        const res = await createCoaster(formData);
+        if (res.success) {
+          setIsOpen(false);
+          router.refresh();
+        } else {
+          setErrorMessage(res.error || "An error occurred while creating.");
+        }
       }
     });
   };
@@ -85,8 +134,12 @@ export function CoasterManagement({ initialCoasters }: Props) {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     startTransition(async () => {
+      setOptimisticCoasters({ type: "delete", id });
+
       const res = await deleteCoaster(id);
-      if (!res.success) {
+      if (res.success) {
+        router.refresh();
+      } else {
         alert(`Delete failed: ${res.error}`);
       }
     });
@@ -118,7 +171,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
-            {coasters.length === 0 ? (
+            {optimisticCoasters.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
@@ -128,7 +181,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
                 </td>
               </tr>
             ) : (
-              coasters.map((coaster) => (
+              optimisticCoasters.map((coaster) => (
                 <tr
                   key={coaster.id}
                   className="transition hover:bg-slate-800/40"
@@ -147,13 +200,15 @@ export function CoasterManagement({ initialCoasters }: Props) {
                   <td className="px-6 py-4 text-right space-x-2">
                     <button
                       onClick={() => openEditModal(coaster)}
-                      className="text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+                      disabled={isPending}
+                      className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(coaster.id, coaster.name)}
-                      className="text-xs font-semibold text-rose-400 hover:text-rose-300"
+                      disabled={isPending}
+                      className="text-xs font-semibold text-rose-400 hover:text-rose-300 disabled:opacity-50"
                     >
                       Delete
                     </button>
@@ -167,14 +222,21 @@ export function CoasterManagement({ initialCoasters }: Props) {
 
       {/* Modal Dialog */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsOpen(false);
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-white">
               {editingCoaster ? "Edit Coaster" : "Add New Coaster"}
             </h3>
 
             {errorMessage && (
-              <div className="mt-3 rounded-md bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-400">
+              <div className="mt-3 rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-400">
                 {errorMessage}
               </div>
             )}
@@ -235,7 +297,10 @@ export function CoasterManagement({ initialCoasters }: Props) {
                     required
                     value={formData.manufacturer}
                     onChange={(e) =>
-                      setFormData({ ...formData, manufacturer: e.target.value })
+                      setFormData({
+                        ...formData,
+                        manufacturer: e.target.value,
+                      })
                     }
                     className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
                   />
@@ -254,7 +319,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
                       type: e.target.value as CoasterType,
                     })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none capitalize"
+                  className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white capitalize focus:border-indigo-500 focus:outline-none"
                 >
                   {COASTER_TYPES.map((t) => (
                     <option key={t} value={t} className="capitalize">
