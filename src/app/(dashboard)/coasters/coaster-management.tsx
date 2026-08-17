@@ -204,7 +204,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
                       type="button"
                       onClick={() => openEditModal(coaster)}
                       disabled={isPending}
-                      className="text-xs font-semibold uppercase tracking-wide text-[#3E5C82] hover:underline disabled:opacity-50"
+                      className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Edit
                     </button>
