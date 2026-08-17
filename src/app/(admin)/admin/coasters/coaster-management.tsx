@@ -11,6 +11,14 @@ import {
 } from "@/actions/admin-coasters";
 import type { Coaster } from "@/types/database";
 
+// Design System Tokens
+const INK = "#17233C";
+const MUTED = "#5B5638";
+const CARD = "#FBF7EC";
+const LINE = "#C9BC98";
+const RAIL = "#3E5C82";
+const ERROR = "#8A2A1E";
+
 interface Props {
   initialCoasters: Coaster[];
 }
@@ -26,7 +34,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Optimistic UI updates synced with server revalidation
+  // Optimistic UI updates
   const [optimisticCoasters, setOptimisticCoasters] = useOptimistic(
     initialCoasters,
     (currentCoasters, action: OptimisticAction) => {
@@ -59,7 +67,6 @@ export function CoasterManagement({ initialCoasters }: Props) {
     type: "steel" as CoasterType,
   });
 
-  // Close modal on Escape key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
@@ -85,10 +92,10 @@ export function CoasterManagement({ initialCoasters }: Props) {
     setEditingCoaster(coaster);
     setFormData({
       name: coaster.name,
-      park: coaster.park,
-      country: coaster.country,
-      manufacturer: coaster.manufacturer,
-      type: coaster.type as CoasterType,
+      park: coaster.park ?? "",
+      country: coaster.country ?? "",
+      manufacturer: coaster.manufacturer ?? "",
+      type: (coaster.type as CoasterType) ?? "steel",
     });
     setErrorMessage(null);
     setIsOpen(true);
@@ -111,7 +118,6 @@ export function CoasterManagement({ initialCoasters }: Props) {
           setErrorMessage(res.error || "An error occurred while updating.");
         }
       } else {
-        // Temporary optimistic object while server processes
         const tempCoaster: Coaster = {
           id: `temp-${Date.now()}`,
           ...formData,
@@ -150,65 +156,88 @@ export function CoasterManagement({ initialCoasters }: Props) {
       {/* Action Bar */}
       <div className="flex justify-end">
         <button
+          type="button"
           onClick={openCreateModal}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+          className="rounded-sm px-4 py-2 text-sm font-semibold transition hover:opacity-90"
+          style={{ backgroundColor: INK, color: CARD }}
         >
           + Add New Coaster
         </button>
       </div>
 
       {/* Catalog Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-sm">
-        <table className="w-full text-left text-sm text-slate-300">
-          <thead className="border-b border-slate-800 bg-slate-950/50 text-xs uppercase text-slate-400">
-            <tr>
-              <th className="px-6 py-3 font-semibold">Name</th>
-              <th className="px-6 py-3 font-semibold">Park</th>
-              <th className="px-6 py-3 font-semibold">Country</th>
-              <th className="px-6 py-3 font-semibold">Manufacturer</th>
-              <th className="px-6 py-3 font-semibold">Type</th>
-              <th className="px-6 py-3 text-right font-semibold">Actions</th>
+      <div
+        className="overflow-hidden rounded-sm border shadow-xs"
+        style={{ borderColor: LINE, backgroundColor: CARD }}
+      >
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr
+              className="border-b text-xs font-semibold uppercase tracking-wider"
+              style={{ borderColor: LINE, color: MUTED }}
+            >
+              <th className="px-6 py-3">Name</th>
+              <th className="px-6 py-3">Park</th>
+              <th className="px-6 py-3">Country</th>
+              <th className="px-6 py-3">Manufacturer</th>
+              <th className="px-6 py-3">Type</th>
+              <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y" style={{ borderColor: LINE }}>
             {optimisticCoasters.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
-                  className="px-6 py-8 text-center text-slate-500"
+                  className="px-6 py-8 text-center text-sm"
+                  style={{ color: MUTED }}
                 >
                   No coasters found. Click above to add one.
                 </td>
               </tr>
             ) : (
               optimisticCoasters.map((coaster) => (
-                <tr
-                  key={coaster.id}
-                  className="transition hover:bg-slate-800/40"
-                >
-                  <td className="px-6 py-4 font-medium text-white">
+                <tr key={coaster.id} className="transition hover:bg-[#F5F2E9]">
+                  <td className="px-6 py-4 font-medium" style={{ color: INK }}>
                     {coaster.name}
                   </td>
-                  <td className="px-6 py-4">{coaster.park}</td>
-                  <td className="px-6 py-4">{coaster.country}</td>
-                  <td className="px-6 py-4">{coaster.manufacturer}</td>
+                  <td className="px-6 py-4" style={{ color: MUTED }}>
+                    {coaster.park ?? "—"}
+                  </td>
+                  <td className="px-6 py-4" style={{ color: MUTED }}>
+                    {coaster.country ?? "—"}
+                  </td>
+                  <td className="px-6 py-4" style={{ color: MUTED }}>
+                    {coaster.manufacturer ?? "—"}
+                  </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium capitalize text-slate-300">
-                      {coaster.type}
+                    <span
+                      className="inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-semibold capitalize"
+                      style={{
+                        backgroundColor: "#EFE8D3",
+                        color: RAIL,
+                        border: `1px solid ${LINE}`,
+                      }}
+                    >
+                      {coaster.type ?? "steel"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right space-x-2">
+                  <td className="px-6 py-4 text-right space-x-3">
                     <button
+                      type="button"
                       onClick={() => openEditModal(coaster)}
                       disabled={isPending}
-                      className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                      className="text-xs font-semibold uppercase tracking-wide hover:underline disabled:opacity-50"
+                      style={{ color: RAIL }}
                     >
                       Edit
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(coaster.id, coaster.name)}
                       disabled={isPending}
-                      className="text-xs font-semibold text-rose-400 hover:text-rose-300 disabled:opacity-50"
+                      className="text-xs font-semibold uppercase tracking-wide hover:underline disabled:opacity-50"
+                      style={{ color: ERROR }}
                     >
                       Delete
                     </button>
@@ -223,27 +252,40 @@ export function CoasterManagement({ initialCoasters }: Props) {
       {/* Modal Dialog */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsOpen(false);
           }}
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-white">
+          <div
+            className="w-full max-w-md rounded-sm border p-6 shadow-lg"
+            style={{ backgroundColor: CARD, borderColor: LINE }}
+          >
+            <h3 className="text-lg font-semibold" style={{ color: INK }}>
               {editingCoaster ? "Edit Coaster" : "Add New Coaster"}
             </h3>
 
             {errorMessage && (
-              <div className="mt-3 rounded-md border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-400">
+              <div
+                className="mt-3 rounded-sm border p-3 text-xs"
+                style={{
+                  backgroundColor: "rgba(138, 42, 30, 0.08)",
+                  borderColor: "rgba(138, 42, 30, 0.3)",
+                  color: ERROR,
+                }}
+              >
                 {errorMessage}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-400">
+                <label
+                  className="block text-xs font-medium"
+                  style={{ color: MUTED }}
+                >
                   Name
                 </label>
                 <input
@@ -253,12 +295,20 @@ export function CoasterManagement({ initialCoasters }: Props) {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-sm border px-3 py-2 text-sm transition outline-none"
+                  style={{
+                    backgroundColor: "#FAF6EB",
+                    borderColor: LINE,
+                    color: INK,
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400">
+                <label
+                  className="block text-xs font-medium"
+                  style={{ color: MUTED }}
+                >
                   Park
                 </label>
                 <input
@@ -268,13 +318,21 @@ export function CoasterManagement({ initialCoasters }: Props) {
                   onChange={(e) =>
                     setFormData({ ...formData, park: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-sm border px-3 py-2 text-sm transition outline-none"
+                  style={{
+                    backgroundColor: "#FAF6EB",
+                    borderColor: LINE,
+                    color: INK,
+                  }}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400">
+                  <label
+                    className="block text-xs font-medium"
+                    style={{ color: MUTED }}
+                  >
                     Country
                   </label>
                   <input
@@ -284,12 +342,20 @@ export function CoasterManagement({ initialCoasters }: Props) {
                     onChange={(e) =>
                       setFormData({ ...formData, country: e.target.value })
                     }
-                    className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-sm border px-3 py-2 text-sm transition outline-none"
+                    style={{
+                      backgroundColor: "#FAF6EB",
+                      borderColor: LINE,
+                      color: INK,
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400">
+                  <label
+                    className="block text-xs font-medium"
+                    style={{ color: MUTED }}
+                  >
                     Manufacturer
                   </label>
                   <input
@@ -302,13 +368,21 @@ export function CoasterManagement({ initialCoasters }: Props) {
                         manufacturer: e.target.value,
                       })
                     }
-                    className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                    className="mt-1 w-full rounded-sm border px-3 py-2 text-sm transition outline-none"
+                    style={{
+                      backgroundColor: "#FAF6EB",
+                      borderColor: LINE,
+                      color: INK,
+                    }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400">
+                <label
+                  className="block text-xs font-medium"
+                  style={{ color: MUTED }}
+                >
                   Coaster Type
                 </label>
                 <select
@@ -319,7 +393,12 @@ export function CoasterManagement({ initialCoasters }: Props) {
                       type: e.target.value as CoasterType,
                     })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white capitalize focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-sm border px-3 py-2 text-sm capitalize transition outline-none"
+                  style={{
+                    backgroundColor: "#FAF6EB",
+                    borderColor: LINE,
+                    color: INK,
+                  }}
                 >
                   {COASTER_TYPES.map((t) => (
                     <option key={t} value={t} className="capitalize">
@@ -333,14 +412,16 @@ export function CoasterManagement({ initialCoasters }: Props) {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-lg px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white"
+                  className="rounded-sm px-4 py-2 text-xs font-semibold transition hover:opacity-80"
+                  style={{ color: MUTED }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+                  className="rounded-sm px-4 py-2 text-xs font-semibold transition hover:opacity-90 disabled:opacity-50"
+                  style={{ backgroundColor: INK, color: CARD }}
                 >
                   {isPending
                     ? "Saving..."
