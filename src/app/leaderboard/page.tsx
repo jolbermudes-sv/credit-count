@@ -167,9 +167,6 @@ export default async function LeaderboardPage() {
               <span className="text-right text-[11px] font-semibold uppercase tracking-[0.15em] text-cream">
                 Credits
               </span>
-              <span className="text-right text-[11px] font-semibold uppercase tracking-[0.15em] text-cream">
-                Rides
-              </span>
             </div>
 
             <ul>
