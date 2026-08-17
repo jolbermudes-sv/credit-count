@@ -60,7 +60,7 @@ export default async function AdminLayout({
 
         <nav className="space-y-1">
           <Link
-            href="/admin/coasters"
+            href="/coasters"
             className="flex items-center rounded-sm px-4 py-2.5 text-sm font-semibold transition hover:opacity-90"
             style={{ backgroundColor: "#EFE8D3", color: INK }}
           >

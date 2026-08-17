@@ -73,7 +73,7 @@ export async function createCoaster(
   }
 
   revalidatePath("/catalog");
-  revalidatePath("/admin/coasters");
+  revalidatePath("/coasters");
 
   return { success: true, data };
 }
@@ -122,7 +122,7 @@ export async function updateCoaster(
   }
 
   revalidatePath("/catalog");
-  revalidatePath("/admin/coasters");
+  revalidatePath("/coasters");
 
   return { success: true };
 }
@@ -160,7 +160,7 @@ export async function deleteCoaster(coasterId: string): Promise<ActionResult> {
   }
 
   revalidatePath("/catalog");
-  revalidatePath("/admin/coasters");
+  revalidatePath("/coasters");
 
   return { success: true };
 }

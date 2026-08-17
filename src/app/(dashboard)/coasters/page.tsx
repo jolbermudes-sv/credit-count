@@ -1,4 +1,4 @@
-// src/app/(admin)/admin/coasters/page.tsx
+// src/app/(dashboard)/coasters/page.tsx
 import { createClient } from "@/lib/supabase/server";
 import { CoasterManagement } from "./coaster-management";
 import type { Coaster } from "@/types/database";

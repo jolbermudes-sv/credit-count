@@ -1,4 +1,4 @@
-// src/app/(admin)/admin/coasters/coaster-management.tsx
+// src/app/(dashboard)/coasters/coaster-management.tsx
 "use client";
 
 import { useState, useTransition, useOptimistic, useEffect } from "react";
@@ -212,7 +212,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
                       type="button"
                       onClick={() => handleDelete(coaster.id, coaster.name)}
                       disabled={isPending}
-                      className="text-xs font-semibold uppercase tracking-wide text-[#8A2A1E] hover:underline disabled:opacity-50"
+                      className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Delete
                     </button>
