@@ -1,4 +1,4 @@
-// src/app/(dashboard)/admin/coasters/coaster-management.tsx
+// src/app/(dashboard)/coasters/coaster-management.tsx
 "use client";
 
 import { useState, useTransition, useOptimistic, useEffect } from "react";
@@ -7,6 +7,7 @@ import {
   createCoaster,
   updateCoaster,
   deleteCoaster,
+  restoreCoaster,
   type CoasterType,
 } from "@/actions/admin-coasters";
 import type { Coaster } from "@/types/database";
@@ -18,7 +19,8 @@ interface Props {
 type OptimisticAction =
   | { type: "create"; coaster: Coaster }
   | { type: "update"; coaster: Coaster }
-  | { type: "delete"; id: string };
+  | { type: "delete"; id: string }
+  | { type: "restore"; id: string };
 
 const COASTER_TYPES: CoasterType[] = ["steel", "wooden", "hybrid", "other"];
 
@@ -26,7 +28,6 @@ export function CoasterManagement({ initialCoasters }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Optimistic UI updates
   const [optimisticCoasters, setOptimisticCoasters] = useOptimistic(
     initialCoasters,
     (currentCoasters, action: OptimisticAction) => {
@@ -38,22 +39,24 @@ export function CoasterManagement({ initialCoasters }: Props) {
             c.id === action.coaster.id ? action.coaster : c,
           );
         case "delete":
-          return currentCoasters.filter((c) => c.id !== action.id);
+          return currentCoasters.map((c) =>
+            c.id === action.id ? { ...c, is_active: false } : c,
+          );
+        case "restore":
+          return currentCoasters.map((c) =>
+            c.id === action.id ? { ...c, is_active: true } : c,
+          );
         default:
           return currentCoasters;
       }
     },
   );
 
-  // Modal State
   const [isOpen, setIsOpen] = useState(false);
   const [editingCoaster, setEditingCoaster] = useState<Coaster | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Confirmation State for deleting
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
     park: "",
@@ -149,9 +152,21 @@ export function CoasterManagement({ initialCoasters }: Props) {
     }
   };
 
+  const handleRestoreClick = (id: string) => {
+    startTransition(async () => {
+      setOptimisticCoasters({ type: "restore", id });
+
+      const res = await restoreCoaster(id);
+      if (res.success) {
+        router.refresh();
+      } else {
+        alert(`Restore failed: ${res.error}`);
+      }
+    });
+  };
+
   return (
     <div className="space-y-4">
-      {/* Action Bar */}
       <div className="flex justify-end">
         <button
           type="button"
@@ -162,7 +177,6 @@ export function CoasterManagement({ initialCoasters }: Props) {
         </button>
       </div>
 
-      {/* Catalog Table */}
       <div className="overflow-hidden rounded-sm border border-line bg-card shadow-xs">
         <table className="w-full text-left text-sm">
           <thead>
@@ -186,76 +200,106 @@ export function CoasterManagement({ initialCoasters }: Props) {
                 </td>
               </tr>
             ) : (
-              optimisticCoasters.map((coaster) => (
-                <tr key={coaster.id} className="transition hover:bg-page">
-                  <td className="px-6 py-4 font-medium text-ink">
-                    {coaster.name}
-                  </td>
-                  <td className="px-6 py-4 text-muted">
-                    {coaster.park ?? "—"}
-                  </td>
-                  <td className="px-6 py-4 text-muted">
-                    {coaster.country ?? "—"}
-                  </td>
-                  <td className="px-6 py-4 text-muted">
-                    {coaster.manufacturer ?? "—"}
-                  </td>
-                  <td className="px-6 py-4">{coaster.type ?? "steel"}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(coaster)}
-                        disabled={isPending}
-                        className="rounded-sm border border-line px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-rail transition disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        Edit
-                      </button>
+              optimisticCoasters.map((coaster) => {
+                const isActive = coaster.is_active ?? true;
 
-                      {confirmingId === coaster.id && !isPending && (
+                return (
+                  <tr
+                    key={coaster.id}
+                    className={`transition hover:bg-page ${
+                      !isActive ? "opacity-60" : ""
+                    }`}
+                  >
+                    <td className="px-6 py-4 font-medium text-ink">
+                      {coaster.name}{" "}
+                      {!isActive && (
+                        <span className="ml-2 text-xs font-normal text-error">
+                          (Inactive)
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-muted">
+                      {coaster.park ?? "—"}
+                    </td>
+                    <td className="px-6 py-4 text-muted">
+                      {coaster.country ?? "—"}
+                    </td>
+                    <td className="px-6 py-4 text-muted">
+                      {coaster.manufacturer ?? "—"}
+                    </td>
+                    <td className="px-6 py-4">{coaster.type ?? "steel"}</td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setConfirmingId(null)}
-                          className="text-xs font-semibold uppercase tracking-wide text-rail"
+                          onClick={() => openEditModal(coaster)}
+                          disabled={isPending}
+                          className="rounded-sm border border-line px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-rail transition disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Cancel
+                          Edit
                         </button>
-                      )}
 
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteClick(coaster.id)}
-                        disabled={isPending}
-                        className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
-                        style={
-                          confirmingId === coaster.id
-                            ? {
-                                backgroundColor: "#C6382A",
-                                borderColor: "#C6382A",
-                                color: "#FBF7EC",
+                        {isActive ? (
+                          <>
+                            {confirmingId === coaster.id && !isPending && (
+                              <button
+                                type="button"
+                                onClick={() => setConfirmingId(null)}
+                                className="text-xs font-semibold uppercase tracking-wide text-rail"
+                              >
+                                Cancel
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteClick(coaster.id)}
+                              disabled={isPending}
+                              className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
+                              style={
+                                confirmingId === coaster.id
+                                  ? {
+                                      backgroundColor: "#C6382A",
+                                      borderColor: "#C6382A",
+                                      color: "#FBF7EC",
+                                    }
+                                  : {
+                                      borderColor: "var(--line, #C9BC98)",
+                                      color: "#8A2A1E",
+                                    }
                               }
-                            : {
-                                borderColor: "var(--line, #C9BC98)",
-                                color: "#8A2A1E",
-                              }
-                        }
-                      >
-                        {isPending && confirmingId === coaster.id
-                          ? "Deleting…"
-                          : confirmingId === coaster.id
-                            ? "Confirm delete?"
-                            : "Delete"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                            >
+                              {isPending && confirmingId === coaster.id
+                                ? "Deleting…"
+                                : confirmingId === coaster.id
+                                  ? "Confirm delete?"
+                                  : "Delete"}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRestoreClick(coaster.id)}
+                            disabled={isPending}
+                            className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
+                            style={{
+                              borderColor: "#2F6B3A",
+                              color: "#2F6B3A",
+                            }}
+                          >
+                            {isPending ? "Restoring…" : "Restore"}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Modal Dialog */}
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"

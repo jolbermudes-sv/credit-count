@@ -199,3 +199,41 @@ export async function deleteCoaster(coasterId: string): Promise<ActionResult> {
 
   return { success: true };
 }
+
+// ---------------------------------------------------------------------------
+// restoreCoaster
+// ---------------------------------------------------------------------------
+
+export async function restoreCoaster(coasterId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "You must be signed in." };
+  }
+
+  const isAdmin = await verifyAdminRole(supabase, user.id);
+  if (!isAdmin) {
+    return { success: false, error: "Unauthorized: Admin access required." };
+  }
+
+  const { error, count } = await supabase
+    .from("coasters")
+    .update({ is_active: true }, { count: "exact" })
+    .eq("id", coasterId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  if (!count) {
+    return { success: false, error: "Coaster not found." };
+  }
+
+  revalidatePath("/catalog");
+  revalidatePath("/coasters");
+
+  return { success: true };
+}
