@@ -1,69 +1,138 @@
-import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 
-export default function Home() {
+export default async function HomePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Redirect authenticated users directly to their dashboard
+  if (user) {
+    redirect("/dashboard");
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-[#FBF7EC] text-[#17233C] flex flex-col font-sans selection:bg-[#C6382A] selection:text-white">
+      {/* Top Bar */}
+      <header className="border-b border-[#17233C]/10 bg-[#E9DFC3]/40 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🎢</span>
+            <span className="font-bold text-xl tracking-tight text-[#17233C]">
+              Credit Count
+            </span>
+          </div>
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/leaderboard"
+              className="text-sm font-medium text-[#17233C]/80 hover:text-[#17233C] transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Leaderboard
+            </Link>
+            <Link
+              href="/login"
+              className="text-sm font-medium text-[#17233C] hover:underline"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              Sign In
+            </Link>
+            <Link
+              href="/signup"
+              className="text-sm font-semibold bg-[#C6382A] hover:bg-[#a82d20] text-white px-4 py-2 rounded-xl transition-colors shadow-sm"
+            >
+              Get Started
+            </Link>
+          </nav>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-16 flex flex-col justify-center">
+        <div className="max-w-3xl mx-auto text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E9DFC3] border border-[#17233C]/10 text-xs font-semibold text-[#17233C]">
+            <span>🎟️</span>
+            <span>The Roller Coaster Credit Log</span>
+          </div>
+
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-[#17233C] leading-tight">
+            Count every credit. <br className="hidden sm:block" />
+            Share every drop.
+          </h1>
+
+          <p className="text-lg sm:text-xl text-[#17233C]/80 max-w-2xl mx-auto leading-relaxed">
+            Log your roller coaster rides, automatically track unique coaster
+            credits, explore detailed stats, and see where you rank on the
+            public community leaderboard.
+          </p>
+
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/signup"
+              className="w-full sm:w-auto px-8 py-3.5 bg-[#C6382A] hover:bg-[#a82d20] text-white font-bold text-base rounded-xl shadow-md transition-all text-center"
+            >
+              Create Free Account
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="w-full sm:w-auto px-8 py-3.5 bg-[#E9DFC3] hover:bg-[#ded1b0] text-[#17233C] font-semibold text-base rounded-xl border border-[#17233C]/15 transition-all text-center"
+            >
+              View Community Leaderboard
+            </Link>
+          </div>
+        </div>
+
+        {/* Feature Grid */}
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-[#E9DFC3]/40 border border-[#17233C]/10 rounded-2xl p-6 space-y-3">
+            <div className="text-3xl">🎢</div>
+            <h2 className="font-bold text-lg text-[#17233C]">Unique Credits</h2>
+            <p className="text-sm text-[#17233C]/75 leading-relaxed">
+              Every unique coaster you experience counts as 1 credit. Ride
+              multiples are recorded in your total ride counts automatically.
+            </p>
+          </div>
+
+          <div className="bg-[#E9DFC3]/40 border border-[#17233C]/10 rounded-2xl p-6 space-y-3">
+            <div className="text-3xl">📊</div>
+            <h2 className="font-bold text-lg text-[#17233C]">Ride Analytics</h2>
+            <p className="text-sm text-[#17233C]/75 leading-relaxed">
+              Break down your history by structure type (Steel, Wood, Hybrid),
+              top manufacturers, parks, and countries.
+            </p>
+          </div>
+
+          <div className="bg-[#E9DFC3]/40 border border-[#17233C]/10 rounded-2xl p-6 space-y-3">
+            <div className="text-3xl">🏆</div>
+            <h2 className="font-bold text-lg text-[#17233C]">
+              Public Leaderboard
+            </h2>
+            <p className="text-sm text-[#17233C]/75 leading-relaxed">
+              Opt-in to showcase your credit tally and see how your coaster
+              milestone count compares with the global community.
+            </p>
+          </div>
+
+          <div className="bg-[#E9DFC3]/40 border border-[#17233C]/10 rounded-2xl p-6 space-y-3">
+            <div className="text-3xl">📚</div>
+            <h2 className="font-bold text-lg text-[#17233C]">
+              Coaster Catalog
+            </h2>
+            <p className="text-sm text-[#17233C]/75 leading-relaxed">
+              Search through coasters worldwide, filter by manufacturer or park,
+              and log new credits directly from the catalog.
+            </p>
+          </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-[#17233C]/10 bg-[#E9DFC3]/30 px-6 py-6 text-center text-xs text-[#17233C]/60">
+        <p>
+          © {new Date().getFullYear()} Credit Count. Built for roller coaster
+          enthusiasts.
+        </p>
+      </footer>
     </div>
   );
 }
