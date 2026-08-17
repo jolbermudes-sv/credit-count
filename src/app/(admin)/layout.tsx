@@ -3,6 +3,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
+const INK = "#17233C";
+const MUTED = "#5B5638";
+const CARD = "#FBF7EC";
+const LINE = "#C9BC98";
+const BG_PAGE = "#FAF6EB";
+
 export default async function AdminLayout({
   children,
 }: {
@@ -28,14 +34,26 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
+    <div
+      className="flex min-h-screen"
+      style={{ backgroundColor: BG_PAGE, color: INK }}
+    >
       {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800 bg-slate-900 p-6">
+      <aside
+        className="w-64 border-r p-6"
+        style={{ backgroundColor: CARD, borderColor: LINE }}
+      >
         <div className="mb-8 flex items-center gap-2">
-          <span className="rounded bg-indigo-600 px-2 py-1 text-xs font-bold uppercase tracking-wider text-white">
+          <span
+            className="rounded-sm px-2 py-0.5 text-xs font-bold uppercase tracking-wider"
+            style={{ backgroundColor: INK, color: CARD }}
+          >
             Admin
           </span>
-          <h1 className="text-xl font-bold tracking-tight text-white">
+          <h1
+            className="text-xl font-bold tracking-tight"
+            style={{ color: INK }}
+          >
             Control Panel
           </h1>
         </div>
@@ -43,13 +61,15 @@ export default async function AdminLayout({
         <nav className="space-y-1">
           <Link
             href="/admin/coasters"
-            className="flex items-center rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700"
+            className="flex items-center rounded-sm px-4 py-2.5 text-sm font-semibold transition hover:opacity-90"
+            style={{ backgroundColor: "#EFE8D3", color: INK }}
           >
             Coasters
           </Link>
           <Link
             href="/dashboard"
-            className="flex items-center rounded-lg px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-800/60 hover:text-white"
+            className="flex items-center rounded-sm px-4 py-2.5 text-sm font-medium transition hover:opacity-80"
+            style={{ color: MUTED }}
           >
             ← Back to App
           </Link>
