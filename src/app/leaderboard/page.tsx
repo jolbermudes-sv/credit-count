@@ -37,13 +37,34 @@ export default async function LeaderboardPage() {
           >
             Credit Count
           </Link>
+
           {user ? (
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-rail hover:underline"
-            >
-              Go to Dashboard
-            </Link>
+            <nav className="flex items-center gap-6 text-sm font-medium">
+              <Link
+                href="/dashboard"
+                className="text-ink hover:text-rail transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/coasters"
+                className="text-ink hover:text-rail transition-colors"
+              >
+                Coasters
+              </Link>
+              <Link
+                href="/leaderboard"
+                className="text-rail font-semibold underline underline-offset-4"
+              >
+                Leaderboard
+              </Link>
+              <Link
+                href="/profile"
+                className="text-ink hover:text-rail transition-colors"
+              >
+                Profile
+              </Link>
+            </nav>
           ) : (
             <div className="flex items-center gap-4 text-sm">
               <Link
