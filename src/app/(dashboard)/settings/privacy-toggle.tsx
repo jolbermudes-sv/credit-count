@@ -1,3 +1,4 @@
+// src/components/settings/privacy-toggle.tsx
 "use client";
 
 import { useState, useTransition } from "react";

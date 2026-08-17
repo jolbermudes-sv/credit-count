@@ -1,3 +1,4 @@
+// src/app/(dashboard)/admin/admin-coaster-table.tsx
 "use client";
 
 import { useState } from "react";
