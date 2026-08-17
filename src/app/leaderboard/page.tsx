@@ -1,4 +1,3 @@
-// src/app/leaderboard/page.tsx
 import Link from "next/link";
 import { Oswald, Inter } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
@@ -10,13 +9,6 @@ const oswald = Oswald({
   display: "swap",
 });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
-
-const INK = "#17233C";
-const CREAM = "#F5EEDA";
-const CARD = "#FBF7EC";
-const LINE = "#C9BC98";
-const MUTED = "#5B5638";
-const CAUTION = "#E3A61E";
 
 /**
  * Deliberately NOT nested under (dashboard): this page is linked from the
@@ -36,27 +28,19 @@ export default async function LeaderboardPage() {
   const entries = result.success ? (result.data ?? []) : [];
 
   return (
-    <div
-      className={`${inter.className} min-h-screen`}
-      style={{ backgroundColor: "#F5F2E9" }}
-    >
-      <header
-        className="border-b"
-        style={{ backgroundColor: CARD, borderColor: LINE }}
-      >
+    <div className={`${inter.className} min-h-screen bg-page`}>
+      <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-6">
           <Link
             href={user ? "/dashboard" : "/login"}
-            className={`${oswald.className} text-xl uppercase tracking-wide`}
-            style={{ color: INK }}
+            className={`${oswald.className} text-xl uppercase tracking-wide text-ink`}
           >
             Credit Count
           </Link>
           {user ? (
             <Link
               href="/dashboard"
-              className="text-sm font-medium hover:underline"
-              style={{ color: "#3E5C82" }}
+              className="text-sm font-medium text-rail hover:underline"
             >
               Go to Dashboard
             </Link>
@@ -64,15 +48,13 @@ export default async function LeaderboardPage() {
             <div className="flex items-center gap-4 text-sm">
               <Link
                 href="/login"
-                className="font-medium hover:underline"
-                style={{ color: "#3E5C82" }}
+                className="font-medium text-rail hover:underline"
               >
                 Sign in
               </Link>
               <Link
                 href="/signup"
-                className="font-medium hover:underline"
-                style={{ color: "#3E5C82" }}
+                className="font-medium text-rail hover:underline"
               >
                 Create account
               </Link>
@@ -83,70 +65,43 @@ export default async function LeaderboardPage() {
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         <h1
-          className={`${oswald.className} text-3xl uppercase tracking-wide`}
-          style={{ color: INK }}
+          className={`${oswald.className} text-3xl uppercase tracking-wide text-ink`}
         >
           Community Leaderboard
         </h1>
-        <p className="mt-1 text-sm" style={{ color: MUTED }}>
+        <p className="mt-1 text-sm text-muted">
           Ranked by total credits. Only riders who&apos;ve opted in to the
           community leaderboard appear here.
         </p>
 
         {!result.success ? (
-          <div
-            className="mt-6 rounded-sm border px-6 py-8 text-center"
-            style={{ borderColor: LINE, backgroundColor: CARD }}
-          >
-            <p className="text-sm" style={{ color: "#8A2A1E" }}>
+          <div className="mt-6 rounded-sm border border-line bg-card px-6 py-8 text-center">
+            <p className="text-sm text-error">
               {result.error ??
                 "We couldn't load the leaderboard. Please refresh the page."}
             </p>
           </div>
         ) : entries.length === 0 ? (
-          <div
-            className="mt-6 rounded-sm border-2 border-dashed px-6 py-12 text-center"
-            style={{ borderColor: LINE, backgroundColor: CARD }}
-          >
-            <p className="text-lg" style={{ color: INK }}>
-              No riders on the board yet.
-            </p>
-            <p className="mt-1 text-sm" style={{ color: MUTED }}>
+          <div className="mt-6 rounded-sm border-2 border-dashed border-line bg-card px-6 py-12 text-center">
+            <p className="text-lg text-ink">No riders on the board yet.</p>
+            <p className="mt-1 text-sm text-muted">
               Log rides and opt in to your profile&apos;s leaderboard setting to
               be the first.
             </p>
           </div>
         ) : (
-          <div
-            className="mt-6 overflow-hidden rounded-sm"
-            style={{ border: `1px solid ${LINE}` }}
-          >
-            <div
-              className="grid grid-cols-[3rem_1fr_5rem_5rem] gap-2 px-4 py-2"
-              style={{ backgroundColor: INK }}
-            >
-              <span
-                className="text-[11px] font-semibold uppercase tracking-[0.15em]"
-                style={{ color: CREAM }}
-              >
+          <div className="mt-6 overflow-hidden rounded-sm border border-line">
+            <div className="grid grid-cols-[3rem_1fr_5rem_5rem] gap-2 bg-ink px-4 py-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-cream">
                 #
               </span>
-              <span
-                className="text-[11px] font-semibold uppercase tracking-[0.15em]"
-                style={{ color: CREAM }}
-              >
+              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-cream">
                 Rider
               </span>
-              <span
-                className="text-right text-[11px] font-semibold uppercase tracking-[0.15em]"
-                style={{ color: CREAM }}
-              >
+              <span className="text-right text-[11px] font-semibold uppercase tracking-[0.15em] text-cream">
                 Credits
               </span>
-              <span
-                className="text-right text-[11px] font-semibold uppercase tracking-[0.15em]"
-                style={{ color: CREAM }}
-              >
+              <span className="text-right text-[11px] font-semibold uppercase tracking-[0.15em] text-cream">
                 Rides
               </span>
             </div>
@@ -159,46 +114,33 @@ export default async function LeaderboardPage() {
                 return (
                   <li
                     key={entry.id}
-                    className="grid grid-cols-[3rem_1fr_5rem_5rem] items-center gap-2 px-4 py-3"
-                    style={{
-                      backgroundColor: isViewer ? "#EFE6CC" : CARD,
-                      borderTop: index === 0 ? "none" : `1px dashed ${LINE}`,
-                    }}
+                    className={`grid grid-cols-[3rem_1fr_5rem_5rem] items-center gap-2 px-4 py-3 ${
+                      isViewer ? "bg-[#EFE6CC]" : "bg-card"
+                    } ${
+                      index !== 0 ? "border-t border-dashed border-line" : ""
+                    }`}
                   >
                     <span
-                      className="inline-flex h-6 w-6 items-center justify-center rounded-sm text-xs font-bold"
-                      style={
+                      className={`inline-flex h-6 w-6 items-center justify-center rounded-sm text-xs font-bold ${
                         rank === 1
-                          ? { backgroundColor: CAUTION, color: "#5C4400" }
-                          : { backgroundColor: INK, color: CREAM }
-                      }
+                          ? "bg-caution text-[#5C4400]"
+                          : "bg-ink text-cream"
+                      }`}
                     >
                       {rank}
                     </span>
-                    <span
-                      className="truncate text-sm font-medium"
-                      style={{ color: INK }}
-                    >
+                    <span className="truncate text-sm font-medium text-ink">
                       {entry.displayName}
                       {isViewer && (
-                        <span
-                          className="ml-1 text-xs font-normal"
-                          style={{ color: MUTED }}
-                        >
+                        <span className="ml-1 text-xs font-normal text-muted">
                           (you)
                         </span>
                       )}
                     </span>
-                    <span
-                      className="text-right text-sm font-semibold"
-                      style={{ color: INK }}
-                    >
+                    <span className="text-right text-sm font-semibold text-ink">
                       {entry.creditCount}
                     </span>
-                    <span
-                      className="text-right text-sm"
-                      style={{ color: MUTED }}
-                    >
+                    <span className="text-right text-sm text-muted">
                       {entry.totalRides}
                     </span>
                   </li>

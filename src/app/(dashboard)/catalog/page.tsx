@@ -1,4 +1,3 @@
-// src/app/(dashboard)/catalog/page.tsx
 import { Suspense } from "react";
 import {
   getCatalogCoasters,
@@ -18,12 +17,6 @@ interface CatalogPageProps {
     page?: string;
   }>;
 }
-
-const INK = "#17233C";
-const MUTED = "#5B5638";
-const CARD = "#FBF7EC";
-const LINE = "#C9BC98";
-const RAIL = "#3E5C82";
 
 function parsePageParam(value: string | undefined): number {
   const n = Number.parseInt(value ?? "1", 10);
@@ -58,53 +51,41 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold" style={{ color: INK }}>
+        <h1 className="text-2xl font-semibold text-[var(--color-ink)]">
           Coaster Catalog
         </h1>
-        <p className="text-sm" style={{ color: MUTED }}>
+        <p className="text-sm text-[var(--color-muted)]">
           Browse the catalog and log a ride straight from here.
         </p>
       </div>
 
       <Suspense
         fallback={
-          <div
-            className="h-11 rounded-sm"
-            style={{ backgroundColor: CARD, border: `1px solid ${LINE}` }}
-          />
+          <div className="h-11 rounded-sm border border-[var(--color-line)] bg-[var(--color-card)]" />
         }
       >
         <CatalogFilters filterOptions={filterOptions} />
       </Suspense>
 
       {!catalogResult.success || !catalogResult.data ? (
-        <div
-          className="rounded-sm border px-6 py-8 text-center"
-          style={{ borderColor: LINE, backgroundColor: CARD }}
-        >
-          <p className="text-sm" style={{ color: "#8A2A1E" }}>
+        <div className="rounded-sm border border-[var(--color-line)] bg-[var(--color-card)] px-6 py-8 text-center">
+          <p className="text-sm text-[#8A2A1E]">
             {catalogResult.error ??
               "We couldn't load the catalog. Please refresh the page."}
           </p>
         </div>
       ) : catalogResult.data.coasters.length === 0 ? (
-        <div
-          className="rounded-sm border-2 border-dashed px-6 py-12 text-center"
-          style={{ borderColor: LINE, backgroundColor: CARD }}
-        >
-          <p
-            className="text-sm font-semibold uppercase tracking-[0.15em]"
-            style={{ color: RAIL }}
-          >
+        <div className="rounded-sm border-2 border-dashed border-[var(--color-line)] bg-[var(--color-card)] px-6 py-12 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.15em] text-[var(--color-rail)]">
             No Matches
           </p>
-          <p className="mt-2 text-lg" style={{ color: INK }}>
+          <p className="mt-2 text-lg text-[var(--color-ink)]">
             No coasters match your filters.
           </p>
         </div>
       ) : (
         <>
-          <p className="text-sm" style={{ color: MUTED }}>
+          <p className="text-sm text-[var(--color-muted)]">
             {catalogResult.data.totalCount} coaster
             {catalogResult.data.totalCount === 1 ? "" : "s"} found.
           </p>

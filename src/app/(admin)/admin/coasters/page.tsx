@@ -3,11 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { CoasterManagement } from "./coaster-management";
 import type { Coaster } from "@/types/database";
 
-const INK = "#17233C";
-const MUTED = "#5B5638";
-const CARD = "#FBF7EC";
-const LINE = "#C9BC98";
-
 export default async function AdminCoastersPage() {
   const supabase = await createClient();
 
@@ -18,11 +13,8 @@ export default async function AdminCoastersPage() {
 
   if (error) {
     return (
-      <div
-        className="rounded-sm border px-6 py-8 text-center"
-        style={{ borderColor: LINE, backgroundColor: CARD }}
-      >
-        <p className="text-sm" style={{ color: "#8A2A1E" }}>
+      <div className="border-line bg-card rounded-sm border px-6 py-8 text-center">
+        <p className="text-error text-sm">
           Failed to load coasters catalog: {error.message}
         </p>
       </div>
@@ -32,10 +24,10 @@ export default async function AdminCoastersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold" style={{ color: INK }}>
+        <h1 className="text-ink text-2xl font-semibold">
           Coaster Catalog Management
         </h1>
-        <p className="text-sm" style={{ color: MUTED }}>
+        <p className="text-muted text-sm">
           Add, update, or remove coasters from the global platform database.
         </p>
       </div>

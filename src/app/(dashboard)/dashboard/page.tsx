@@ -13,11 +13,8 @@ export default async function DashboardPage() {
   // to an inline message rather than bouncing them off the page.
   if (!result.success || !result.data) {
     return (
-      <div
-        className="rounded-sm border px-6 py-8 text-center"
-        style={{ borderColor: "#C9BC98", backgroundColor: "#FBF7EC" }}
-      >
-        <p className="text-sm" style={{ color: "#8A2A1E" }}>
+      <div className="rounded-sm border border-[var(--color-line)] bg-[var(--color-card)] px-6 py-8 text-center">
+        <p className="text-sm text-[#8A2A1E]">
           {result.error ??
             "We couldn't load your dashboard. Please refresh the page."}
         </p>
@@ -31,10 +28,10 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold" style={{ color: "#17233C" }}>
+          <h1 className="text-2xl font-semibold text-[var(--color-ink)]">
             Welcome back, {stats.displayName}
           </h1>
-          <p className="text-sm" style={{ color: "#5B5638" }}>
+          <p className="text-sm text-[var(--color-muted)]">
             {stats.totalRides === 0
               ? "Log your first ride to start your credit count."
               : `You've logged ${stats.creditCount} credit${stats.creditCount === 1 ? "" : "s"} across ${stats.totalRides} ride${stats.totalRides === 1 ? "" : "s"}.`}
