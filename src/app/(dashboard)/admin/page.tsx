@@ -20,6 +20,7 @@ export default async function AdminPage() {
     .eq("id", user.id)
     .single();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userProfile = profile as any;
   if (!userProfile?.is_admin) {
     redirect("/dashboard");

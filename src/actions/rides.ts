@@ -1,7 +1,7 @@
 // src/actions/rides.ts
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ensureUserProfile } from "@/lib/profile";
 import type { Coaster } from "@/types/database";
@@ -10,6 +10,31 @@ export interface ActionResult<T = undefined> {
   success: boolean;
   error?: string;
   data?: T;
+}
+
+// ---------------------------------------------------------------------------
+// Cache Tags & Revalidation Settings
+// ---------------------------------------------------------------------------
+
+export const RIDES_CACHE_TAG = "user-rides";
+
+/**
+ * Rutas que dependen de los datos de rides/catálogo/perfil y deben
+ * revalidarse tras crear, actualizar o eliminar un registro.
+ */
+const REVALIDATION_PATHS: { path: string; type?: "page" | "layout" }[] = [
+  { path: "/dashboard", type: "page" },
+  { path: "/history", type: "layout" },
+  { path: "/catalog", type: "page" },
+  { path: "/profile", type: "page" },
+];
+
+/** Invalida la caché mediante tags y rutas centralizadas tras mutaciones. */
+function revalidateRideData(): void {
+  for (const { path, type } of REVALIDATION_PATHS) {
+    revalidatePath(path, type);
+  }
+  revalidateTag(RIDES_CACHE_TAG);
 }
 
 // ---------------------------------------------------------------------------
@@ -24,12 +49,6 @@ export type CoasterSearchResult = Pick<
 const MIN_QUERY_LENGTH = 2;
 const SEARCH_LIMIT = 10;
 
-/**
- * Strips PostgREST filter-syntax delimiters (this string gets interpolated
- * into a raw `.or()` filter expression, so a stray comma or paren could
- * otherwise reshape the query) and escapes SQL LIKE wildcards, so a search
- * for e.g. "50%" behaves as a literal match rather than an open wildcard.
- */
 function sanitizeSearchTerm(input: string): string {
   return input.replace(/[,()]/g, "").replace(/[%_]/g, "\\$&").trim();
 }
@@ -87,7 +106,7 @@ function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-/** Inserts a ride for the current user. Revalidates /dashboard and /history. */
+/** Inserts a ride for the current user. */
 export async function logRide(payload: LogRidePayload): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -133,8 +152,7 @@ export async function logRide(payload: LogRidePayload): Promise<ActionResult> {
     return { success: false, error: insertError.message };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/history");
+  revalidateRideData();
 
   return { success: true };
 }
@@ -148,13 +166,6 @@ export interface UpdateRidePayload {
   notes?: string;
 }
 
-/**
- * Updates the date/notes on a ride owned by the current user (the coaster
- * itself isn't reassignable here — changing which coaster a ride was on
- * is closer to "delete and re-log" than an edit, so it's kept out of
- * scope). Was missing entirely prior to this pass — the SOW requires
- * users be able to edit, not just delete, their own ride entries.
- */
 export async function updateRide(
   rideId: string,
   payload: UpdateRidePayload,
@@ -197,8 +208,7 @@ export async function updateRide(
     return { success: false, error: "Ride not found." };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/history");
+  revalidateRideData();
 
   return { success: true };
 }
@@ -207,13 +217,6 @@ export async function updateRide(
 // deleteRide
 // ---------------------------------------------------------------------------
 
-/**
- * Deletes a ride owned by the current user. RLS restricts deletes to rows
- * the caller owns (see supabase/rls_and_functions.sql), but we scope the
- * query by `user_id` too as defense-in-depth — it also means someone
- * else's ride id fails as "not found" rather than depending solely on the
- * database to reject it.
- */
 export async function deleteRide(rideId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -242,8 +245,7 @@ export async function deleteRide(rideId: string): Promise<ActionResult> {
     return { success: false, error: "Ride not found." };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/history");
+  revalidateRideData();
 
   return { success: true };
 }
@@ -263,7 +265,6 @@ export interface RideHistoryEntry {
   };
 }
 
-/** Fetches the current user's full ride history, most recent first. */
 export async function getUserRideHistory(): Promise<
   ActionResult<RideHistoryEntry[]>
 > {
@@ -313,7 +314,7 @@ export async function getUserRideHistory(): Promise<
   const history = rideRows
     .map((ride): RideHistoryEntry | null => {
       const coaster = coasterById.get(ride.coaster_id);
-      if (!coaster) return null; // orphaned ride (shouldn't happen given the FK constraint)
+      if (!coaster) return null;
       return {
         id: ride.id,
         riddenAt: ride.ridden_at,
@@ -340,7 +341,6 @@ export interface DashboardStats {
   creditsByType: { type: string; count: number }[];
 }
 
-/** Groups items by a derived key, counting occurrences, sorted by count desc. */
 function groupCount<T, K extends string>(
   items: T[],
   keyFn: (item: T) => K,
@@ -364,16 +364,6 @@ const EMPTY_STATS: Omit<DashboardStats, "displayName"> = {
   creditsByType: [],
 };
 
-/**
- * Fetches the current user's rides and profile, and computes dashboard
- * stats. A "credit" is a unique coaster ridden (COUNT DISTINCT coaster_id);
- * "rides" counts every logged visit (COUNT *), so riding the same coaster
- * twice adds a ride but not a credit.
- *
- * Uses `ensureUserProfile` rather than a raw query — this is one of the
- * three places that previously fell back to showing the user's email
- * address when their `profiles` row was missing.
- */
 export async function getUserDashboardData(): Promise<
   ActionResult<DashboardStats>
 > {

@@ -1,13 +1,7 @@
 // src/components/dashboard/log-ride-modal.tsx
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-  type FormEvent,
-} from "react";
+import { FormEvent, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   logRide,
@@ -55,28 +49,11 @@ const labelClass =
   "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.15em] text-[#17233C]";
 
 interface LogRideModalProps {
-  /**
-   * Pre-selects a coaster and skips the search step entirely — used by
-   * `CoasterCard` so clicking "Log Ride" on a specific catalog card doesn't
-   * make the person search for the coaster they're already looking at.
-   * The dashboard's standalone "+ Log a Ride" button omits this and keeps
-   * the full search flow.
-   */
   initialCoaster?: CoasterSearchResult;
   triggerLabel?: string;
   triggerClassName?: string;
 }
 
-/**
- * Self-contained trigger + dialog: dropping `<LogRideModal />` anywhere
- * renders both its own trigger button and the modal, so the parent
- * doesn't need to manage open/closed state itself.
- *
- * Note: this handles focus-on-open and Escape-to-close, but does not
- * implement a full focus trap (Tab cycling back inside the dialog) — that's
- * a reasonable follow-up if accessibility auditing calls for it, but is
- * more machinery than this phase's scope needs.
- */
 export function LogRideModal({
   initialCoaster,
   triggerLabel = "+ Log a Ride",
@@ -100,8 +77,6 @@ export function LogRideModal({
   useEffect(() => {
     if (!open) return;
 
-    // Only steal focus into the search field if there's actually a search
-    // field to focus — a pre-filled coaster skips straight to the date.
     if (!selectedCoaster) {
       searchInputRef.current?.focus();
     }
@@ -119,33 +94,43 @@ export function LogRideModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Debounced live search, guarded against out-of-order responses landing
-  // after a more recent keystroke's request.
+  // Búsqueda en vivo con debounce, sin llamadas síncronas a setState dentro del cuerpo del efecto
   useEffect(() => {
     const term = searchTerm.trim();
     latestQueryRef.current = term;
 
     if (selectedCoaster || term.length < MIN_QUERY_LENGTH) {
-      setResults([]);
-      setIsSearching(false);
       return;
     }
 
-    setIsSearching(true);
-    const timeoutId = setTimeout(() => {
-      searchCoasters(term).then((result) => {
-        if (latestQueryRef.current !== term) return; // stale response, discard
-        setIsSearching(false);
+    const timeoutId = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const result = await searchCoasters(term);
+        if (latestQueryRef.current !== term) return;
         setResults(result.success ? (result.data ?? []) : []);
-      });
+      } finally {
+        if (latestQueryRef.current === term) {
+          setIsSearching(false);
+        }
+      }
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
   }, [searchTerm, selectedCoaster]);
 
+  function handleSearchChange(value: string) {
+    setSearchTerm(value);
+    if (value.trim().length < MIN_QUERY_LENGTH) {
+      setResults([]);
+      setIsSearching(false);
+    }
+  }
+
   function resetForm() {
     setSearchTerm("");
     setResults([]);
+    setIsSearching(false);
     setSelectedCoaster(initialCoaster ?? null);
     setRiddenAt(todayDateString());
     setNotes("");
@@ -161,6 +146,7 @@ export function LogRideModal({
     setSelectedCoaster(coaster);
     setSearchTerm("");
     setResults([]);
+    setIsSearching(false);
   }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -185,9 +171,6 @@ export function LogRideModal({
       }
 
       handleClose();
-      // logRide already revalidates the cache; refresh forces this
-      // already-mounted page to re-fetch immediately instead of waiting
-      // for the next navigation.
       router.refresh();
     });
   }
@@ -271,7 +254,12 @@ export function LogRideModal({
                     </span>
                     <button
                       type="button"
-                      onClick={() => setSelectedCoaster(null)}
+                      onClick={() => {
+                        setSelectedCoaster(null);
+                        setSearchTerm("");
+                        setResults([]);
+                        setIsSearching(false);
+                      }}
                       className="text-xs font-semibold uppercase tracking-wide"
                       style={{ color: RAIL }}
                     >
@@ -285,7 +273,7 @@ export function LogRideModal({
                       id="coaster-search"
                       type="text"
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                       placeholder="Search by coaster or park name…"
                       autoComplete="off"
                       className={inputClass}

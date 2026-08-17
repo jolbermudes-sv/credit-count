@@ -35,12 +35,6 @@ export function CatalogFilters({
   );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Keep the input in sync if the URL changes from elsewhere (e.g. the
-  // "Clear filters" button, or browser back/forward navigation).
-  useEffect(() => {
-    setSearchInput(searchParams.get("search") ?? "");
-  }, [searchParams]);
-
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
