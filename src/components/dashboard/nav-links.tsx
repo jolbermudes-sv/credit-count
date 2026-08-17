@@ -56,6 +56,7 @@ function NavLink({
 
 export function DesktopNavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
+  const adminActive = isActive(pathname, "/admin");
 
   return (
     <nav className="hidden items-center gap-1 md:flex">
@@ -69,10 +70,18 @@ export function DesktopNavLinks({ isAdmin }: { isAdmin: boolean }) {
       ))}
       {isAdmin && (
         <Link
-          href="/admin"
-          aria-current={isActive(pathname, "/admin") ? "page" : undefined}
+          href="/admin/coasters"
+          aria-current={adminActive ? "page" : undefined}
           className="ml-1 flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm font-medium transition hover:bg-[#EFE6CC]"
-          style={{ color: "#8A6A00" }}
+          style={
+            adminActive
+              ? {
+                  color: "#17233C",
+                  backgroundColor: "#EFE6CC",
+                  boxShadow: "inset 0 -2px 0 #C6382A",
+                }
+              : { color: "#8A6A00" }
+          }
         >
           Admin
           <span
@@ -89,6 +98,7 @@ export function DesktopNavLinks({ isAdmin }: { isAdmin: boolean }) {
 
 export function MobileNavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
+  const adminActive = isActive(pathname, "/admin");
 
   return (
     <nav className="-mt-1 flex gap-1 overflow-x-auto px-4 pb-3 sm:px-6 md:hidden">
@@ -102,10 +112,18 @@ export function MobileNavLinks({ isAdmin }: { isAdmin: boolean }) {
       ))}
       {isAdmin && (
         <Link
-          href="/admin"
-          aria-current={isActive(pathname, "/admin") ? "page" : undefined}
-          className="shrink-0 rounded-sm px-3 py-1.5 text-sm font-medium"
-          style={{ color: "#8A6A00" }}
+          href="/admin/coasters"
+          aria-current={adminActive ? "page" : undefined}
+          className="shrink-0 rounded-sm px-3 py-1.5 text-sm font-medium transition"
+          style={
+            adminActive
+              ? {
+                  color: "#17233C",
+                  backgroundColor: "#EFE6CC",
+                  boxShadow: "inset 0 -2px 0 #C6382A",
+                }
+              : { color: "#8A6A00" }
+          }
         >
           Admin
         </Link>
