@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Oswald, Inter } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { getLeaderboard } from "@/actions/leaderboard";
+import { logout } from "@/actions/auth"; // Import your logout server action
 import {
   DesktopNavLinks,
   MobileNavLinks,
@@ -14,11 +15,31 @@ const oswald = Oswald({
 });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
+function TrackMark() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2 12h20" />
+      <path d="M20 12v8H4v-8" />
+      <path d="M6 12V4h12v8" />
+    </svg>
+  );
+}
+
 /**
  * Deliberately NOT nested under (dashboard): this page is linked from the
  * pre-login screen (see src/app/(auth)/login/page.tsx) and must render for
  * signed-out visitors. Auth is checked here only to decide which header
- * link to show and to highlight the viewer's own row — never to gate
+ * layout to show and to highlight the viewer's own row — never to gate
  * access. Access control for *who appears* happens at the database layer
  * (privacy_opt_in), not here.
  */
@@ -29,15 +50,21 @@ export default async function LeaderboardPage() {
   } = await supabase.auth.getUser();
 
   let isAdmin = false;
+  let displayName = "";
 
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_admin")
+      .select("is_admin, display_name")
       .eq("id", user.id)
       .single();
 
     isAdmin = Boolean(profile?.is_admin ?? user.user_metadata?.is_admin);
+    displayName =
+      profile?.display_name ||
+      user.user_metadata?.full_name ||
+      user.email?.split("@")[0] ||
+      "Rider";
   }
 
   const result = await getLeaderboard();
@@ -45,17 +72,42 @@ export default async function LeaderboardPage() {
 
   return (
     <div className={`${inter.className} min-h-screen bg-page`}>
-      <header className="border-b border-line bg-card">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-6">
+      <header
+        className="sticky top-0 z-10 border-b"
+        style={{ backgroundColor: "#FBF7EC", borderColor: "#C9BC98" }}
+      >
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link
             href={user ? "/dashboard" : "/login"}
-            className={`${oswald.className} text-xl uppercase tracking-wide text-ink`}
+            className={`${oswald.className} flex items-center gap-2 text-xl uppercase tracking-wide`}
+            style={{ color: "#17233C" }}
           >
+            <TrackMark />
             Credit Count
           </Link>
 
           {user ? (
-            <DesktopNavLinks isAdmin={isAdmin} />
+            <>
+              <DesktopNavLinks isAdmin={isAdmin} />
+
+              <div className="flex items-center gap-3">
+                <span
+                  className="hidden max-w-[10rem] truncate rounded-full border border-dashed px-3 py-1 text-sm font-medium sm:inline-block"
+                  style={{ borderColor: "#C9BC98", color: "#17233C" }}
+                  title={displayName}
+                >
+                  {displayName}
+                </span>
+                <form action={logout}>
+                  <button
+                    type="submit"
+                    className="rounded-sm px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-[#C6382A] transition hover:bg-[#FBEAE7]"
+                  >
+                    Log out
+                  </button>
+                </form>
+              </div>
+            </>
           ) : (
             <div className="flex items-center gap-4 text-sm">
               <Link
