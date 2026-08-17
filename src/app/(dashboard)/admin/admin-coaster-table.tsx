@@ -1,7 +1,7 @@
 // src/app/(dashboard)/admin/admin-coaster-table.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -33,7 +33,9 @@ export default function AdminCoasterTable({
 }) {
   const router = useRouter();
   const supabase = createClient();
-  const [coasters, setCoasters] = useState<Coaster[]>(initialCoasters);
+
+  // initialCoasters (from the server) is the single source of truth.
+  // No local mirrored state, so there's nothing to go stale.
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<CoasterFormData>({
     name: "",
@@ -44,6 +46,7 @@ export default function AdminCoasterTable({
     is_active: true,
   });
   const [error, setError] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const resetForm = () => {
     setEditingId(null);
@@ -104,37 +107,40 @@ export default function AdminCoasterTable({
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this coaster?")) return;
 
+    setPendingId(id);
+    setError(null);
+
     const { error: deleteError } = await supabase
       .from("coasters")
       .update({ is_active: false })
       .eq("id", id);
+
+    setPendingId(null);
 
     if (deleteError) {
       setError(deleteError.message);
       return;
     }
 
-    // Update local state to reflect soft-delete (is_active: false)
-    setCoasters(
-      coasters.map((c) => (c.id === id ? { ...c, is_active: false } : c)),
-    );
     router.refresh();
   };
 
   const handleRestore = async (id: string) => {
+    setPendingId(id);
+    setError(null);
+
     const { error: restoreError } = await supabase
       .from("coasters")
       .update({ is_active: true })
       .eq("id", id);
+
+    setPendingId(null);
 
     if (restoreError) {
       setError(restoreError.message);
       return;
     }
 
-    setCoasters(
-      coasters.map((c) => (c.id === id ? { ...c, is_active: true } : c)),
-    );
     router.refresh();
   };
 
@@ -246,8 +252,9 @@ export default function AdminCoasterTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {coasters.map((c) => {
+            {initialCoasters.map((c) => {
               const isActive = c.is_active ?? true;
+              const isPending = pendingId === c.id;
 
               return (
                 <tr
@@ -277,18 +284,20 @@ export default function AdminCoasterTable({
                     {isActive ? (
                       <button
                         type="button"
+                        disabled={isPending}
                         onClick={() => handleDelete(c.id)}
-                        className="text-red-600 hover:text-red-900 text-sm font-semibold"
+                        className="text-red-600 hover:text-red-900 text-sm font-semibold disabled:opacity-50"
                       >
-                        Delete
+                        {isPending ? "..." : "Delete"}
                       </button>
                     ) : (
                       <button
                         type="button"
+                        disabled={isPending}
                         onClick={() => handleRestore(c.id)}
-                        className="text-green-600 hover:text-green-900 text-sm font-semibold"
+                        className="text-green-600 hover:text-green-900 text-sm font-semibold disabled:opacity-50"
                       >
-                        Restore
+                        {isPending ? "..." : "Restore"}
                       </button>
                     )}
                   </td>
