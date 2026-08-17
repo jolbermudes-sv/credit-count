@@ -35,6 +35,38 @@ async function verifyAdminRole(
 }
 
 // ---------------------------------------------------------------------------
+// getCoasters
+// ---------------------------------------------------------------------------
+
+export async function getCoasters(): Promise<Coaster[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return [];
+  }
+
+  const isAdmin = await verifyAdminRole(supabase, user.id);
+  if (!isAdmin) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("coasters")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data;
+}
+
+// ---------------------------------------------------------------------------
 // createCoaster
 // ---------------------------------------------------------------------------
 
