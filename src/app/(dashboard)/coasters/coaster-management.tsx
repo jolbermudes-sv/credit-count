@@ -1,4 +1,4 @@
-// src/app/(dashboard)/coasters/coaster-management.tsx
+// src/app/(dashboard)/admin/coasters/coaster-management.tsx
 "use client";
 
 import { useState, useTransition, useOptimistic, useEffect } from "react";
@@ -49,6 +49,9 @@ export function CoasterManagement({ initialCoasters }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [editingCoaster, setEditingCoaster] = useState<Coaster | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Confirmation State for deleting
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -128,19 +131,22 @@ export function CoasterManagement({ initialCoasters }: Props) {
     });
   };
 
-  const handleDelete = (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+  const handleDeleteClick = (id: string) => {
+    if (confirmingId === id) {
+      startTransition(async () => {
+        setOptimisticCoasters({ type: "delete", id });
+        setConfirmingId(null);
 
-    startTransition(async () => {
-      setOptimisticCoasters({ type: "delete", id });
-
-      const res = await deleteCoaster(id);
-      if (res.success) {
-        router.refresh();
-      } else {
-        alert(`Delete failed: ${res.error}`);
-      }
-    });
+        const res = await deleteCoaster(id);
+        if (res.success) {
+          router.refresh();
+        } else {
+          alert(`Delete failed: ${res.error}`);
+        }
+      });
+    } else {
+      setConfirmingId(id);
+    }
   };
 
   return (
@@ -150,17 +156,17 @@ export function CoasterManagement({ initialCoasters }: Props) {
         <button
           type="button"
           onClick={openCreateModal}
-          className="rounded-sm bg-[#17233C] px-4 py-2 text-sm font-semibold text-[#FBF7EC] transition hover:opacity-90"
+          className="rounded-sm bg-ink px-4 py-2 text-sm font-semibold text-card transition hover:opacity-95"
         >
           + Add New Coaster
         </button>
       </div>
 
       {/* Catalog Table */}
-      <div className="overflow-hidden rounded-sm border border-[#C9BC98] bg-[#FBF7EC] shadow-xs">
+      <div className="overflow-hidden rounded-sm border border-line bg-card shadow-xs">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-[#C9BC98] text-xs font-semibold uppercase tracking-wider text-[#5B5638]">
+            <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-muted">
               <th className="px-6 py-3">Name</th>
               <th className="px-6 py-3">Park</th>
               <th className="px-6 py-3">Country</th>
@@ -169,53 +175,82 @@ export function CoasterManagement({ initialCoasters }: Props) {
               <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#C9BC98]">
+          <tbody className="divide-y divide-line">
             {optimisticCoasters.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
-                  className="px-6 py-8 text-center text-sm text-[#5B5638]"
+                  className="px-6 py-8 text-center text-sm text-muted"
                 >
                   No coasters found. Click above to add one.
                 </td>
               </tr>
             ) : (
               optimisticCoasters.map((coaster) => (
-                <tr key={coaster.id} className="transition hover:bg-[#F5F2E9]">
-                  <td className="px-6 py-4 font-medium text-[#17233C]">
+                <tr key={coaster.id} className="transition hover:bg-page">
+                  <td className="px-6 py-4 font-medium text-ink">
                     {coaster.name}
                   </td>
-                  <td className="px-6 py-4 text-[#5B5638]">
+                  <td className="px-6 py-4 text-muted">
                     {coaster.park ?? "—"}
                   </td>
-                  <td className="px-6 py-4 text-[#5B5638]">
+                  <td className="px-6 py-4 text-muted">
                     {coaster.country ?? "—"}
                   </td>
-                  <td className="px-6 py-4 text-[#5B5638]">
+                  <td className="px-6 py-4 text-muted">
                     {coaster.manufacturer ?? "—"}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center rounded-sm border border-[#C9BC98] bg-[#EFE8D3] px-2 py-0.5 text-xs font-semibold capitalize text-[#3E5C82]">
+                    <span className="inline-flex items-center rounded-sm border border-line bg-page px-2 py-0.5 text-xs font-semibold capitalize text-rail">
                       {coaster.type ?? "steel"}
                     </span>
                   </td>
-                  <td className="space-x-3 px-6 py-4 text-right">
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(coaster)}
-                      disabled={isPending}
-                      className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(coaster.id, coaster.name)}
-                      disabled={isPending}
-                      className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Delete
-                    </button>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(coaster)}
+                        disabled={isPending}
+                        className="rounded-sm border border-line px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-rail transition disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Edit
+                      </button>
+
+                      {confirmingId === coaster.id && !isPending && (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingId(null)}
+                          className="text-xs font-semibold uppercase tracking-wide text-rail"
+                        >
+                          Cancel
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteClick(coaster.id)}
+                        disabled={isPending}
+                        className="rounded-sm border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-60"
+                        style={
+                          confirmingId === coaster.id
+                            ? {
+                                backgroundColor: "#C6382A",
+                                borderColor: "#C6382A",
+                                color: "#FBF7EC",
+                              }
+                            : {
+                                borderColor: "var(--line, #C9BC98)",
+                                color: "#8A2A1E",
+                              }
+                        }
+                      >
+                        {isPending && confirmingId === coaster.id
+                          ? "Deleting…"
+                          : confirmingId === coaster.id
+                            ? "Confirm delete?"
+                            : "Delete"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -234,20 +269,20 @@ export function CoasterManagement({ initialCoasters }: Props) {
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md rounded-sm border border-[#C9BC98] bg-[#FBF7EC] p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-[#17233C]">
+          <div className="w-full max-w-md rounded-sm border border-line bg-card p-6 shadow-lg">
+            <h3 className="text-lg font-semibold text-ink">
               {editingCoaster ? "Edit Coaster" : "Add New Coaster"}
             </h3>
 
             {errorMessage && (
-              <div className="mt-3 rounded-sm border border-[#8A2A1E]/30 bg-[#8A2A1E]/10 p-3 text-xs text-[#8A2A1E]">
+              <div className="mt-3 rounded-sm border border-error/30 bg-error/10 p-3 text-xs text-error">
                 {errorMessage}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-[#5B5638]">
+                <label className="block text-xs font-medium text-muted">
                   Name
                 </label>
                 <input
@@ -257,12 +292,12 @@ export function CoasterManagement({ initialCoasters }: Props) {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="mt-1 w-full rounded-sm border border-[#C9BC98] bg-[#FAF6EB] px-3 py-2 text-sm text-[#17233C] transition outline-none focus:border-[#17233C]"
+                  className="mt-1 w-full rounded-sm border border-line bg-page px-3 py-2 text-sm text-ink transition outline-none focus:border-ink"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5B5638]">
+                <label className="block text-xs font-medium text-muted">
                   Park
                 </label>
                 <input
@@ -272,13 +307,13 @@ export function CoasterManagement({ initialCoasters }: Props) {
                   onChange={(e) =>
                     setFormData({ ...formData, park: e.target.value })
                   }
-                  className="mt-1 w-full rounded-sm border border-[#C9BC98] bg-[#FAF6EB] px-3 py-2 text-sm text-[#17233C] transition outline-none focus:border-[#17233C]"
+                  className="mt-1 w-full rounded-sm border border-line bg-page px-3 py-2 text-sm text-ink transition outline-none focus:border-ink"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-[#5B5638]">
+                  <label className="block text-xs font-medium text-muted">
                     Country
                   </label>
                   <input
@@ -288,12 +323,12 @@ export function CoasterManagement({ initialCoasters }: Props) {
                     onChange={(e) =>
                       setFormData({ ...formData, country: e.target.value })
                     }
-                    className="mt-1 w-full rounded-sm border border-[#C9BC98] bg-[#FAF6EB] px-3 py-2 text-sm text-[#17233C] transition outline-none focus:border-[#17233C]"
+                    className="mt-1 w-full rounded-sm border border-line bg-page px-3 py-2 text-sm text-ink transition outline-none focus:border-ink"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-[#5B5638]">
+                  <label className="block text-xs font-medium text-muted">
                     Manufacturer
                   </label>
                   <input
@@ -306,13 +341,13 @@ export function CoasterManagement({ initialCoasters }: Props) {
                         manufacturer: e.target.value,
                       })
                     }
-                    className="mt-1 w-full rounded-sm border border-[#C9BC98] bg-[#FAF6EB] px-3 py-2 text-sm text-[#17233C] transition outline-none focus:border-[#17233C]"
+                    className="mt-1 w-full rounded-sm border border-line bg-page px-3 py-2 text-sm text-ink transition outline-none focus:border-ink"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#5B5638]">
+                <label className="block text-xs font-medium text-muted">
                   Coaster Type
                 </label>
                 <select
@@ -323,7 +358,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
                       type: e.target.value as CoasterType,
                     })
                   }
-                  className="mt-1 w-full rounded-sm border border-[#C9BC98] bg-[#FAF6EB] px-3 py-2 text-sm capitalize text-[#17233C] transition outline-none focus:border-[#17233C]"
+                  className="mt-1 w-full rounded-sm border border-line bg-page px-3 py-2 text-sm capitalize text-ink transition outline-none focus:border-ink"
                 >
                   {COASTER_TYPES.map((t) => (
                     <option key={t} value={t} className="capitalize">
@@ -337,14 +372,14 @@ export function CoasterManagement({ initialCoasters }: Props) {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-sm px-4 py-2 text-xs font-semibold text-[#5B5638] transition hover:opacity-80"
+                  className="rounded-sm px-4 py-2 text-xs font-semibold text-muted transition hover:opacity-80"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="rounded-sm bg-[#17233C] px-4 py-2 text-xs font-semibold text-[#FBF7EC] transition hover:opacity-90 disabled:opacity-50"
+                  className="rounded-sm bg-ink px-4 py-2 text-xs font-semibold text-card transition hover:opacity-90 disabled:opacity-50"
                 >
                   {isPending
                     ? "Saving..."
