@@ -118,6 +118,23 @@ export default function AdminCoasterTable({
     router.refresh();
   };
 
+  const handleRestore = async (id: string) => {
+    const { error: restoreError } = await supabase
+      .from("coasters")
+      .update({ is_active: true })
+      .eq("id", id);
+
+    if (restoreError) {
+      setError(restoreError.message);
+      return;
+    }
+
+    setCoasters(
+      coasters.map((c) => (c.id === id ? { ...c, is_active: true } : c)),
+    );
+    router.refresh();
+  };
+
   return (
     <div className="space-y-6">
       {error && (
@@ -226,28 +243,52 @@ export default function AdminCoasterTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {coasters.map((c) => (
-              <tr key={c.id}>
-                <td className="px-4 py-2 font-medium">{c.name}</td>
-                <td className="px-4 py-2">{c.park}</td>
-                <td className="px-4 py-2 capitalize">{c.type}</td>
-                <td className="px-4 py-2">{c.manufacturer}</td>
-                <td className="px-4 py-2 text-right space-x-2">
-                  <button
-                    onClick={() => handleEdit(c)}
-                    className="text-indigo-600 hover:text-indigo-900 text-sm font-semibold"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    className="text-red-600 hover:text-red-900 text-sm font-semibold"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {coasters.map((c) => {
+              const isActive = c.is_active ?? true;
+
+              return (
+                <tr
+                  key={c.id}
+                  className={!isActive ? "bg-gray-50 opacity-60" : ""}
+                >
+                  <td className="px-4 py-2 font-medium">
+                    {c.name}{" "}
+                    {!isActive && (
+                      <span className="ml-2 text-xs font-normal text-red-500">
+                        (Inactive)
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">{c.park}</td>
+                  <td className="px-4 py-2 capitalize">{c.type}</td>
+                  <td className="px-4 py-2">{c.manufacturer}</td>
+                  <td className="px-4 py-2 text-right space-x-2">
+                    <button
+                      onClick={() => handleEdit(c)}
+                      className="text-indigo-600 hover:text-indigo-900 text-sm font-semibold"
+                    >
+                      Edit
+                    </button>
+
+                    {isActive ? (
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="text-red-600 hover:text-red-900 text-sm font-semibold"
+                      >
+                        Delete
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleRestore(c.id)}
+                        className="text-green-600 hover:text-green-900 text-sm font-semibold"
+                      >
+                        Restore
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

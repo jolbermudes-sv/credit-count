@@ -168,8 +168,8 @@ export async function getCatalogFilterOptions(): Promise<
     { data: countryRows, error: countryError },
     { data: manufacturerRows, error: manufacturerError },
   ] = await Promise.all([
-    supabase.from("coasters").select("country"),
-    supabase.from("coasters").select("manufacturer"),
+    supabase.from("coasters").select("country").eq("is_active", true),
+    supabase.from("coasters").select("manufacturer").eq("is_active", true),
   ]);
 
   if (countryError) {
