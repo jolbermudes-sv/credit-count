@@ -106,7 +106,7 @@ export default function AdminCoasterTable({
 
     const { error: deleteError } = await supabase
       .from("coasters")
-      .delete()
+      .update({ is_active: false })
       .eq("id", id);
 
     if (deleteError) {
