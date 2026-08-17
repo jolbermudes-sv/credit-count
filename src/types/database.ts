@@ -16,7 +16,7 @@ export interface Database {
           id: string;
           display_name: string;
           privacy_opt_in: boolean;
-          role: "enthusiast" | "admin";
+          is_admin: boolean;
           created_at: string;
         };
         Insert: {

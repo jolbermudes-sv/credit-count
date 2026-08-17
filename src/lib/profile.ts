@@ -3,12 +3,10 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 
 export interface ResolvedProfile {
+  isadmin: boolean;
   displayName: string;
   privacyOptIn: boolean;
-  role: "enthusiast" | "admin";
 }
-
-const FALLBACK_ROLE = "enthusiast" as const;
 
 function fallbackDisplayName(user: User): string {
   const metaName =
@@ -40,7 +38,7 @@ export async function ensureUserProfile(
 ): Promise<ResolvedProfile> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, privacy_opt_in, role")
+    .select("display_name, privacy_opt_in, is_admin")
     .eq("id", user.id)
     .single();
 
@@ -48,7 +46,7 @@ export async function ensureUserProfile(
     return {
       displayName: profile.display_name,
       privacyOptIn: profile.privacy_opt_in,
-      role: profile.role,
+      isadmin: profile.is_admin,
     };
   }
 
@@ -57,12 +55,12 @@ export async function ensureUserProfile(
   const { data: repaired } = await supabase
     .from("profiles")
     .upsert({ id: user.id, display_name: displayName }, { onConflict: "id" })
-    .select("display_name, privacy_opt_in, role")
+    .select("display_name, privacy_opt_in, is_admin")
     .single();
 
   return {
     displayName: repaired?.display_name ?? displayName,
     privacyOptIn: repaired?.privacy_opt_in ?? false,
-    role: repaired?.role ?? FALLBACK_ROLE,
+    isadmin: repaired?.is_admin ?? false,
   };
 }

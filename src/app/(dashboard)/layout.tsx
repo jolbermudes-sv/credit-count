@@ -56,7 +56,9 @@ export default async function DashboardLayout({
   // `user.email` whenever the handle_new_user trigger hadn't fired yet.
   const profile = await ensureUserProfile(supabase, user);
   const displayName = profile.displayName;
-  const isAdmin = profile.role === "admin";
+
+  // Check the boolean flag directly (handling camelCase or snake_case depending on your profile helper)
+  const isAdmin = Boolean(profile.isadmin ?? profile.isadmin);
 
   return (
     <div
