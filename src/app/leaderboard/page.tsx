@@ -4,7 +4,11 @@ import { Oswald, Inter } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { getLeaderboard } from "@/actions/leaderboard";
 
-const oswald = Oswald({ subsets: ["latin"], weight: ["600", "700"] });
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+});
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 const INK = "#17233C";

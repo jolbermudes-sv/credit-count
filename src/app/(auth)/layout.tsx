@@ -2,7 +2,11 @@
 import type { ReactNode } from 'react'
 import { Oswald, Inter } from 'next/font/google'
 
-const oswald = Oswald({ subsets: ['latin'], weight: ['600', '700'] })
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+});
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 /**

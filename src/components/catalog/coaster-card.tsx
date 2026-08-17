@@ -3,7 +3,7 @@ import { Oswald } from "next/font/google";
 import { LogRideModal } from "@/components/dashboard/log-ride-modal";
 import type { CatalogCoaster } from "@/actions/catalog";
 
-const oswald = Oswald({ subsets: ["latin"], weight: ["600"] });
+const oswald = Oswald({ subsets: ["latin"], weight: ["600"], display: "swap" });
 
 const INK = "#17233C";
 const CARD = "#FBF7EC";
