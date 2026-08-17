@@ -172,7 +172,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
               <th className="px-6 py-3">Country</th>
               <th className="px-6 py-3">Manufacturer</th>
               <th className="px-6 py-3">Type</th>
-              <th className="px-6 py-3 text-right">Actions</th>
+              <th className="px-6 py-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
