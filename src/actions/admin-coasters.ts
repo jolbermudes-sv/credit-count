@@ -27,11 +27,11 @@ async function verifyAdminRole(
 ): Promise<boolean> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("is_admin")
     .eq("id", userId)
     .single();
 
-  return profile?.role === "admin";
+  return profile?.is_admin === true;
 }
 
 // ---------------------------------------------------------------------------
