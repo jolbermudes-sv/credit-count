@@ -1,4 +1,3 @@
-// src/components/catalog/catalog-filters.tsx
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";

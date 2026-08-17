@@ -1,4 +1,3 @@
-// src/components/dashboard/nav-links.tsx
 "use client";
 
 import Link from "next/link";
