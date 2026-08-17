@@ -2,6 +2,10 @@ import Link from "next/link";
 import { Oswald, Inter } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { getLeaderboard } from "@/actions/leaderboard";
+import {
+  DesktopNavLinks,
+  MobileNavLinks,
+} from "@/components/dashboard/nav-links";
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -24,6 +28,18 @@ export default async function LeaderboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let isAdmin = false;
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    isAdmin = Boolean(profile?.is_admin ?? user.user_metadata?.is_admin);
+  }
+
   const result = await getLeaderboard();
   const entries = result.success ? (result.data ?? []) : [];
 
@@ -39,32 +55,7 @@ export default async function LeaderboardPage() {
           </Link>
 
           {user ? (
-            <nav className="flex items-center gap-6 text-sm font-medium">
-              <Link
-                href="/dashboard"
-                className="text-ink hover:text-rail transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/coasters"
-                className="text-ink hover:text-rail transition-colors"
-              >
-                Coasters
-              </Link>
-              <Link
-                href="/leaderboard"
-                className="text-rail font-semibold underline underline-offset-4"
-              >
-                Leaderboard
-              </Link>
-              <Link
-                href="/profile"
-                className="text-ink hover:text-rail transition-colors"
-              >
-                Profile
-              </Link>
-            </nav>
+            <DesktopNavLinks isAdmin={isAdmin} />
           ) : (
             <div className="flex items-center gap-4 text-sm">
               <Link
@@ -82,6 +73,8 @@ export default async function LeaderboardPage() {
             </div>
           )}
         </div>
+
+        {user && <MobileNavLinks isAdmin={isAdmin} />}
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
