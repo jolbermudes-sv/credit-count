@@ -200,11 +200,7 @@ export function CoasterManagement({ initialCoasters }: Props) {
                   <td className="px-6 py-4 text-muted">
                     {coaster.manufacturer ?? "—"}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center rounded-sm border border-line bg-page px-2 py-0.5 text-xs font-semibold capitalize text-rail">
-                      {coaster.type ?? "steel"}
-                    </span>
-                  </td>
+                  <td className="px-6 py-4">{coaster.type ?? "steel"}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
