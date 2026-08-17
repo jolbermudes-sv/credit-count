@@ -1,4 +1,3 @@
-// src/app/(dashboard)/coasters/coaster-management.tsx
 "use client";
 
 import { useState, useTransition, useOptimistic, useEffect } from "react";
