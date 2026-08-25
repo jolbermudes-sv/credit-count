@@ -4,17 +4,17 @@
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/actions/rides";
 
-export interface LeaderboardEntry {
-  id: string;
-  displayName: string;
-  creditCount: number;
-}
-
 interface RpcLeaderboardRow {
   id: string;
   display_name: string | null;
   credit_count: number | string | null;
   total_rides: number | string | null;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  displayName: string;
+  creditCount: number;
 }
 
 export async function getLeaderboard(): Promise<

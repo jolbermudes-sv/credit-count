@@ -47,9 +47,9 @@ export function PrivacyToggle({ initialOptIn }: { initialOptIn: boolean }) {
             Appear on the public leaderboard
           </p>
           <p className="mt-1 text-sm" style={{ color: MUTED }}>
-            When on, your display name, credit count, and ride count are visible
-            to anyone on the <span className="font-medium">Leaderboard</span>{" "}
-            page — including signed-out visitors. Off by default.
+            When on, your display name, and credit count are visible to anyone
+            on the <span className="font-medium">Leaderboard</span> page —
+            including signed-out visitors. Off by default.
           </p>
         </div>
 
