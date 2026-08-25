@@ -56,7 +56,6 @@ function NavLink({
 
 export function DesktopNavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
-  const adminActive = isActive(pathname, "/admin");
 
   return (
     <nav className="hidden items-center gap-1 md:flex">
@@ -71,10 +70,10 @@ export function DesktopNavLinks({ isAdmin }: { isAdmin: boolean }) {
       {isAdmin && (
         <Link
           href="/coasters"
-          aria-current={adminActive ? "page" : undefined}
+          aria-current={isActive(pathname, "/coasters") ? "page" : undefined}
           className="ml-1 flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm font-medium transition hover:bg-[#EFE6CC]"
           style={
-            adminActive
+            isActive(pathname, "/coasters")
               ? {
                   color: "#17233C",
                   backgroundColor: "#EFE6CC",
@@ -98,7 +97,6 @@ export function DesktopNavLinks({ isAdmin }: { isAdmin: boolean }) {
 
 export function MobileNavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
-  const adminActive = isActive(pathname, "/admin");
 
   return (
     <nav className="-mt-1 flex gap-1 overflow-x-auto px-4 pb-3 sm:px-6 md:hidden">
@@ -113,10 +111,10 @@ export function MobileNavLinks({ isAdmin }: { isAdmin: boolean }) {
       {isAdmin && (
         <Link
           href="/coasters"
-          aria-current={adminActive ? "page" : undefined}
+          aria-current={isActive(pathname, "/coasters") ? "page" : undefined}
           className="shrink-0 rounded-sm px-3 py-1.5 text-sm font-medium transition"
           style={
-            adminActive
+            isActive(pathname, "/coasters")
               ? {
                   color: "#17233C",
                   backgroundColor: "#EFE6CC",

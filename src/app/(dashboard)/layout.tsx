@@ -58,7 +58,7 @@ export default async function DashboardLayout({
   const displayName = profile.displayName;
 
   // Check the boolean flag directly (handling camelCase or snake_case depending on your profile helper)
-  const isAdmin = Boolean(profile.isadmin ?? profile.isadmin);
+  const isAdmin = Boolean(profile.isAdmin);
 
   return (
     <div

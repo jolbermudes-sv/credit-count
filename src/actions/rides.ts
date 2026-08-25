@@ -60,6 +60,7 @@ export async function searchCoasters(
     .from("coasters")
     .select("id, name, park, country, manufacturer, type")
     .or(`name.ilike.%${term}%,park.ilike.%${term}%`)
+    .eq("is_active", true)
     .order("name", { ascending: true })
     .limit(SEARCH_LIMIT);
 
@@ -133,10 +134,11 @@ export async function logRide(payload: LogRidePayload): Promise<ActionResult> {
     return { success: false, error: insertError.message };
   }
 
-  revalidatePath("/dashboard", "page");
   revalidatePath("/catalog", "page");
-  revalidatePath("/history", "layout");
-  revalidatePath("/profile", "page");
+  revalidatePath("/coasters", "page");
+  revalidatePath("/dashboard", "page");
+  revalidatePath("/history", "page");
+  revalidatePath("/settings", "layout");
 
   return { success: true };
 }

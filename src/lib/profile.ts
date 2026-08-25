@@ -3,7 +3,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 
 export interface ResolvedProfile {
-  isadmin: boolean;
+  isAdmin: boolean;
   displayName: string;
   privacyOptIn: boolean;
 }
@@ -46,7 +46,7 @@ export async function ensureUserProfile(
     return {
       displayName: profile.display_name,
       privacyOptIn: profile.privacy_opt_in,
-      isadmin: profile.is_admin,
+      isAdmin: profile.is_admin,
     };
   }
 
@@ -61,6 +61,6 @@ export async function ensureUserProfile(
   return {
     displayName: repaired?.display_name ?? displayName,
     privacyOptIn: repaired?.privacy_opt_in ?? false,
-    isadmin: repaired?.is_admin ?? false,
+    isAdmin: repaired?.is_admin ?? false,
   };
 }
